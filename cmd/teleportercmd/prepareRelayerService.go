@@ -5,12 +5,12 @@ package teleportercmd
 import (
 	_ "embed"
 	"fmt"
-	"os/user"
 	"os"
+	"os/user"
 	"path/filepath"
 
-	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
+	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 	"github.com/spf13/cobra"
 )
 
@@ -32,10 +32,10 @@ func newPrepareRelayerServiceCmd() *cobra.Command {
 
 func prepareRelayerService(_ *cobra.Command, args []string) error {
 	relayerBin, err := teleporter.InstallRelayer(app.GetAWMRelayerBinDir())
-        usr, err := user.Current()
-        if err != nil {
+	usr, err := user.Current()
+	if err != nil {
 		return err
-        }
+	}
 	awmRelayerServicesDir := app.GetAWMRelayerServiceDir()
 	if err := os.MkdirAll(awmRelayerServicesDir, constants.DefaultPerms755); err != nil {
 		return err
