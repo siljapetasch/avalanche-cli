@@ -38,13 +38,11 @@ func GetRelayerKeyInfo(keyPath string) (string, string, error) {
 		err error
 	)
 	if utils.FileExists(keyPath) {
-		ux.Logger.PrintToUser("Loading stored key %q for relayer ops", constants.AWMRelayerKeyName)
 		k, err = key.LoadSoft(models.LocalNetwork.ID, keyPath)
 		if err != nil {
 			return "", "", err
 		}
 	} else {
-		ux.Logger.PrintToUser("Generating stored key %q for relayer ops", constants.AWMRelayerKeyName)
 		k, err = key.NewSoft(0)
 		if err != nil {
 			return "", "", err

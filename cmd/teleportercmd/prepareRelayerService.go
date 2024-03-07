@@ -47,5 +47,5 @@ func prepareRelayerService(_ *cobra.Command, _ []string) error {
 	if err := os.WriteFile(awmRelayerServicePath, []byte(awmRelayerServiceConf), constants.WriteReadReadPerms); err != nil {
 		return err
 	}
-	return err
+	return os.RemoveAll(app.GetAWMRelayerServiceConfigPath())
 }
