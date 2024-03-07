@@ -3,7 +3,6 @@
 package nodecmd
 
 import (
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"

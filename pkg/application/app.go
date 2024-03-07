@@ -71,6 +71,10 @@ func (app *Avalanche) GetRunDir() string {
 	return filepath.Join(app.baseDir, constants.RunDir)
 }
 
+func (app *Avalanche) GetServicesDir() string {
+	return filepath.Join(app.baseDir, constants.ServicesDir)
+}
+
 func (app *Avalanche) GetCustomVMDir() string {
 	return filepath.Join(app.baseDir, constants.CustomVMDir)
 }
@@ -124,6 +128,10 @@ func (app *Avalanche) GetAWMRelayerRunPath() string {
 
 func (app *Avalanche) GetAWMRelayerSnapshotConfsDir() string {
 	return filepath.Join(app.GetSnapshotsDir(), constants.AWMRelayerSnapshotConfsDir)
+}
+
+func (app *Avalanche) GetAWMRelayerServiceDir() string {
+	return filepath.Join(app.GetServicesDir(), constants.AWMRelayerInstallDir)
 }
 
 func (app *Avalanche) GetExtraLocalNetworkDataPath() string {
