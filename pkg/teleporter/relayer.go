@@ -173,6 +173,17 @@ func saveRelayerRunFile(runFilePath string, pid int) error {
 	return nil
 }
 
+func InstallRelayer(binDir string) (string, error) {
+	downloader := application.NewDownloader()
+	version, err := downloader.GetLatestReleaseVersion(binutils.GetGithubLatestReleaseURL(constants.AvaLabsOrg, constants.AWMRelayerRepoName))
+	if err != nil {
+		return "", err
+	}
+	ux.Logger.PrintToUser("using latest awm-relayer version (%s)", version)
+	versionBinDir := filepath.Join(binDir, version)
+	return installRelayer(versionBinDir, version)
+}
+
 func installRelayer(binDir, version string) (string, error) {
 	binPath := filepath.Join(binDir, constants.AWMRelayerBin)
 	if utils.IsExecutable(binPath) {
