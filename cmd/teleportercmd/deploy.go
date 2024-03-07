@@ -3,12 +3,9 @@
 package teleportercmd
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
-	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/key"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
@@ -66,41 +63,20 @@ func deploy(_ *cobra.Command, args []string) error {
 	if sc.Networks[network.Name()].BlockchainID == ids.Empty {
 		return fmt.Errorf("subnet has not been deployed to %s", network.Name())
 	}
-	// get deploy key
-	keyPath := app.GetKeyPath(sc.TeleporterKey)
-	k, err := key.LoadSoft(network.ID, keyPath)
-	if err != nil {
-		return err
-	}
-	privKeyStr := hex.EncodeToString(k.Raw())
 	// deploy to subnet
-	td := teleporter.Deployer{}
-	blockchainID := sc.Networks[network.Name()].BlockchainID
-	endpoint := network.BlockchainEndpoint(blockchainID.String())
-	alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err := td.Deploy(
-		app.GetTeleporterBinDir(),
+	blockchainID := sc.Networks[network.Name()].BlockchainID.String()
+	alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err := teleporter.DeployAndFundRelayer(
+		app,
 		sc.TeleporterVersion,
+		network,
 		subnetName,
-		endpoint,
-		privKeyStr,
+		blockchainID,
+		sc.TeleporterKey,
 	)
 	if err != nil {
 		return err
 	}
-	// get relayer address to fund
-	relayerAddress, _, err := teleporter.GetRelayerKeyInfo(app.GetKeyPath(constants.AWMRelayerKeyName))
-	if err != nil {
-		return err
-	}
 	if !alreadyDeployed {
-		// fund relayer
-		if err := teleporter.FundRelayer(
-			endpoint,
-			privKeyStr,
-			relayerAddress,
-		); err != nil {
-			return err
-		}
 		// update sidecar
 		networkInfo := sc.Networks[network.Name()]
 		networkInfo.TeleporterMessengerAddress = teleporterMessengerAddress
@@ -112,32 +88,20 @@ func deploy(_ *cobra.Command, args []string) error {
 	}
 	// deploy to cchain for local
 	if network.Kind == models.Local {
-		k, err := key.LoadEwoq(network.ID)
-		if err != nil {
-			return err
-		}
-		privKeyStr := hex.EncodeToString(k.Raw())
-		endpoint := network.CChainEndpoint()
-		alreadyDeployed, cchainTeleporterMessengerAddress, cchainTeleporterRegistryAddress, err := td.Deploy(
-			app.GetTeleporterBinDir(),
+		blockchainID := "C"
+		alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err = teleporter.DeployAndFundRelayer(
+			app,
 			sc.TeleporterVersion,
+			network,
 			"c-chain",
-			endpoint,
-			privKeyStr,
+			blockchainID,
+			"",
 		)
 		if err != nil {
 			return err
 		}
 		if !alreadyDeployed {
-			// fund relayer
-			if err := teleporter.FundRelayer(
-				endpoint,
-				privKeyStr,
-				relayerAddress,
-			); err != nil {
-				return err
-			}
-			if err := subnet.WriteExtraLocalNetworkData(app, cchainTeleporterMessengerAddress, cchainTeleporterRegistryAddress); err != nil {
+			if err := subnet.WriteExtraLocalNetworkData(app, teleporterMessengerAddress, teleporterRegistryAddress); err != nil {
 				return err
 			}
 		}
