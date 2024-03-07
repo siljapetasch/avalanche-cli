@@ -30,8 +30,11 @@ func newPrepareRelayerServiceCmd() *cobra.Command {
 	return cmd
 }
 
-func prepareRelayerService(_ *cobra.Command, args []string) error {
+func prepareRelayerService(_ *cobra.Command, _ []string) error {
 	relayerBin, err := teleporter.InstallRelayer(app.GetAWMRelayerBinDir())
+	if err != nil {
+		return err
+	}
 	usr, err := user.Current()
 	if err != nil {
 		return err
