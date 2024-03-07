@@ -18,7 +18,7 @@ import (
 var awmRelayerServiceTemplate []byte
 
 // avalanche teleporter msg
-func newRelayerInstallCmd() *cobra.Command {
+func newPrepareRelayerServiceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "prepareService",
 		Short:        "Installs AWM relayer as a service",
