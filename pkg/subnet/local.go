@@ -619,17 +619,8 @@ func (d *LocalDeployer) doDeploy(chain string, chainGenesis []byte, genesisPath 
 			); err != nil {
 				return nil, err
 			}
-			extraLocalNetworkDataPath := d.app.GetExtraLocalNetworkDataPath()
-			extraLocalNetworkData := ExtraLocalNetworkData{
-				CChainTeleporterMessengerAddress: cchainTeleporterMessengerAddress,
-				CChainTeleporterRegistryAddress:  cchainTeleporterRegistryAddress,
-			}
-			bs, err := json.Marshal(&extraLocalNetworkData)
-			if err != nil {
+			if err := WriteExtraLocalNetworkData(d.app, cchainTeleporterMessengerAddress, cchainTeleporterRegistryAddress); err != nil {
 				return nil, err
-			}
-			if err := os.WriteFile(extraLocalNetworkDataPath, bs, constants.WriteReadReadPerms); err != nil {
-				return nil, fmt.Errorf("could not extra local network data file to %s: %w", extraLocalNetworkDataPath, err)
 			}
 		}
 		// deploy current blockchain
@@ -1142,4 +1133,17 @@ func GetExtraLocalNetworkData(app *application.Avalanche) (*ExtraLocalNetworkDat
 		return nil, err
 	}
 	return &extraLocalNetworkData, nil
+}
+
+func WriteExtraLocalNetworkData(app *application.Avalanche, cchainTeleporterMessengerAddress string, cchainTeleporterRegistryAddress string) error {
+	extraLocalNetworkDataPath := app.GetExtraLocalNetworkDataPath()
+	extraLocalNetworkData := ExtraLocalNetworkData{
+		CChainTeleporterMessengerAddress: cchainTeleporterMessengerAddress,
+		CChainTeleporterRegistryAddress:  cchainTeleporterRegistryAddress,
+	}
+	bs, err := json.Marshal(&extraLocalNetworkData)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(extraLocalNetworkDataPath, bs, constants.WriteReadReadPerms)
 }

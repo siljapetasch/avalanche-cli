@@ -10,6 +10,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/key"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 	"github.com/ava-labs/avalanchego/ids"
 
@@ -86,12 +87,13 @@ func deploy(_ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	// get relayer address to fund
+	relayerAddress, _, err := teleporter.GetRelayerKeyInfo(app.GetKeyPath(constants.AWMRelayerKeyName))
+	if err != nil {
+		return err
+	}
 	if !alreadyDeployed {
 		// fund relayer
-		relayerAddress, _, err := teleporter.GetRelayerKeyInfo(app.GetKeyPath(constants.AWMRelayerKeyName))
-		if err != nil {
-			return err
-		}
 		if err := teleporter.FundRelayer(
 			endpoint,
 			privKeyStr,
@@ -106,6 +108,38 @@ func deploy(_ *cobra.Command, args []string) error {
 		sc.Networks[network.Name()] = networkInfo
 		if err := app.UpdateSidecar(&sc); err != nil {
 			return err
+		}
+	}
+	// deploy to cchain for local
+	if network.Kind == models.Local {
+		k, err := key.LoadEwoq(network.ID)
+		if err != nil {
+			return err
+		}
+		privKeyStr := hex.EncodeToString(k.Raw())
+		endpoint := network.CChainEndpoint()
+		alreadyDeployed, cchainTeleporterMessengerAddress, cchainTeleporterRegistryAddress, err := td.Deploy(
+			app.GetTeleporterBinDir(),
+			sc.TeleporterVersion,
+			"c-chain",
+			endpoint,
+			privKeyStr,
+		)
+		if err != nil {
+			return err
+		}
+		if !alreadyDeployed {
+			// fund relayer
+			if err := teleporter.FundRelayer(
+				endpoint,
+				privKeyStr,
+				relayerAddress,
+			); err != nil {
+				return err
+			}
+			if err := subnet.WriteExtraLocalNetworkData(app, cchainTeleporterMessengerAddress, cchainTeleporterRegistryAddress); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
