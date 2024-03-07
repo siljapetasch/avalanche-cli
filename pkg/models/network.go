@@ -150,3 +150,9 @@ func (n *Network) HandlePublicNetworkSimulation() {
 		n.Endpoint = constants.LocalAPIEndpoint
 	}
 }
+
+func (n *Network) UpdateEndpoint(endpoint string) {
+	if endpoint != "" {
+		n.Endpoint = endpoint
+	}
+}

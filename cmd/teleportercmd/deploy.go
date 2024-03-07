@@ -34,19 +34,27 @@ func newDeployCmd() *cobra.Command {
 }
 
 func deploy(_ *cobra.Command, args []string) error {
+	subnetName := args[0]
+	// fix endpoint if available
+	if useDevnet && endpoint == "" {
+		var err error
+		endpoint, err = getDevnetEndpoint(subnetName)
+		if err != nil {
+			return err
+		}
+	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
 		useLocal,
 		useDevnet,
 		useFuji,
 		useMainnet,
-		"",
-		false,
-		[]models.NetworkKind{models.Local},
+		endpoint,
+		true,
+		[]models.NetworkKind{models.Local, models.Devnet},
 	)
 	if err != nil {
 		return err
 	}
-	subnetName := args[0]
 	sc, err := app.LoadSidecar(subnetName)
 	if err != nil {
 		return fmt.Errorf("failed to load sidecar: %w", err)
@@ -64,6 +72,7 @@ func deploy(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("subnet has not been deployed to %s", network.Name())
 	}
 	// deploy to subnet
+	network.UpdateEndpoint(sc.Networks[network.Name()].Endpoint)
 	blockchainID := sc.Networks[network.Name()].BlockchainID.String()
 	alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err := teleporter.DeployAndFundRelayer(
 		app,
@@ -87,7 +96,7 @@ func deploy(_ *cobra.Command, args []string) error {
 		}
 	}
 	// deploy to cchain for local
-	if network.Kind == models.Local {
+	if network.Kind == models.Local || network.Kind == models.Devnet {
 		blockchainID := "C"
 		alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err = teleporter.DeployAndFundRelayer(
 			app,
@@ -100,9 +109,11 @@ func deploy(_ *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		if !alreadyDeployed {
-			if err := subnet.WriteExtraLocalNetworkData(app, teleporterMessengerAddress, teleporterRegistryAddress); err != nil {
-				return err
+		if network.Kind == models.Local {
+			if !alreadyDeployed {
+				if err := subnet.WriteExtraLocalNetworkData(app, teleporterMessengerAddress, teleporterRegistryAddress); err != nil {
+					return err
+				}
 			}
 		}
 	}

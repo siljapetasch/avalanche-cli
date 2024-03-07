@@ -52,22 +52,36 @@ func newMsgCmd() *cobra.Command {
 }
 
 func msg(_ *cobra.Command, args []string) error {
+	sourceSubnetName := args[0]
+	destSubnetName := args[1]
+	message := args[2]
+
+	// fix endpoint if available
+	if useDevnet && endpoint == "" {
+		var err error
+		endpoint, err = getDevnetEndpoint(sourceSubnetName)
+		if err != nil {
+			return err
+		}
+		if endpoint == "" {
+			endpoint, err = getDevnetEndpoint(destSubnetName)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
 		useLocal,
 		useDevnet,
 		useFuji,
 		useMainnet,
-		"",
-		false,
-		[]models.NetworkKind{models.Local},
+		endpoint,
+		true,
+		[]models.NetworkKind{models.Local, models.Devnet},
 	)
 	if err != nil {
 		return err
 	}
-
-	sourceSubnetName := args[0]
-	destSubnetName := args[1]
-	message := args[2]
 
 	_, sourceChainID, sourceMessengerAddress, _, sourceKey, err := getSubnetParams(network, sourceSubnetName)
 	if err != nil {
@@ -252,4 +266,15 @@ func getSubnetParams(network models.Network, subnetName string) (ids.ID, ids.ID,
 		return ids.Empty, ids.Empty, "", "", nil, fmt.Errorf("teleporter messenger address for subnet %s not found on network %s", subnetName, network.Name())
 	}
 	return subnetID, chainID, teleporterMessengerAddress, teleporterRegistryAddress, k, nil
+}
+
+func getDevnetEndpoint(subnetName string) (string, error) {
+	if strings.ToLower(subnetName) == "c-chain" || strings.ToLower(subnetName) == "cchain" {
+		return "", nil
+	}
+	sc, err := app.LoadSidecar(subnetName)
+	if err != nil {
+		return "", err
+	}
+	return sc.Networks[models.Devnet.String()].Endpoint, nil
 }
