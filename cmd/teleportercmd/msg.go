@@ -15,9 +15,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/key"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
-	"github.com/ava-labs/avalanchego/api/info"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/subnet-evm/core/types"
 	teleportermessenger "github.com/ava-labs/teleporter/abi-bindings/go/Teleporter/TeleporterMessenger"
@@ -216,7 +214,7 @@ func getSubnetParams(network models.Network, subnetName string) (ids.ID, ids.ID,
 	)
 	if strings.ToLower(subnetName) == "c-chain" || strings.ToLower(subnetName) == "cchain" {
 		subnetID = ids.Empty
-		chainID, err = getChainID(network.Endpoint, "C")
+		chainID, err = subnet.GetChainID(network, "C")
 		if err != nil {
 			return ids.Empty, ids.Empty, "", "", nil, err
 		}
@@ -254,11 +252,4 @@ func getSubnetParams(network models.Network, subnetName string) (ids.ID, ids.ID,
 		return ids.Empty, ids.Empty, "", "", nil, fmt.Errorf("teleporter messenger address for subnet %s not found on network %s", subnetName, network.Name())
 	}
 	return subnetID, chainID, teleporterMessengerAddress, teleporterRegistryAddress, k, nil
-}
-
-func getChainID(endpoint string, chainName string) (ids.ID, error) {
-	client := info.NewClient(endpoint)
-	ctx, cancel := utils.GetAPIContext()
-	defer cancel()
-	return client.GetBlockchainID(ctx, chainName)
 }
