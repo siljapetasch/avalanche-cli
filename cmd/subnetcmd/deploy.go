@@ -53,13 +53,12 @@ var (
 	mainnetChainID           uint32
 	skipCreatePrompt         bool
 	avagoBinaryPath          string
+	skipLocalTeleporter      bool
 
-	errMutuallyExlusiveNetworks = errors.New("--local, --fuji/--testnet, --mainnet are mutually exclusive")
-
+	errMutuallyExlusiveNetworks    = errors.New("--local, --fuji/--testnet, --mainnet are mutually exclusive")
 	errMutuallyExlusiveControlKeys = errors.New("--control-keys and --same-control-key are mutually exclusive")
-
-	ErrMutuallyExlusiveKeyLedger = errors.New("key source flags --key, --ledger/--ledger-addrs are mutually exclusive")
-	ErrStoredKeyOnMainnet        = errors.New("key --key is not available for mainnet operations")
+	ErrMutuallyExlusiveKeyLedger   = errors.New("key source flags --key, --ledger/--ledger-addrs are mutually exclusive")
+	ErrStoredKeyOnMainnet          = errors.New("key --key is not available for mainnet operations")
 )
 
 // avalanche subnet deploy
@@ -101,6 +100,7 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 	cmd.Flags().StringVarP(&subnetIDStr, "subnet-id", "u", "", "deploy into given subnet id")
 	cmd.Flags().Uint32Var(&mainnetChainID, "mainnet-chain-id", 0, "use different ChainID for mainnet deployment")
 	cmd.Flags().StringVar(&avagoBinaryPath, "avalanchego-path", "", "use this avalanchego binary path")
+	cmd.Flags().BoolVar(&skipLocalTeleporter, "skip-local-teleporter", false, "skip local teleporter deploy to a local network")
 	return cmd
 }
 
@@ -381,7 +381,7 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		}
 
 		deployer := subnet.NewLocalDeployer(app, userProvidedAvagoVersion, avagoBinaryPath, vmBin)
-		deployInfo, err := deployer.DeployToLocalNetwork(chain, chainGenesis, genesisPath)
+		deployInfo, err := deployer.DeployToLocalNetwork(chain, chainGenesis, genesisPath, skipLocalTeleporter)
 		if err != nil {
 			if deployer.BackendStartedHere() {
 				if innerErr := binutils.KillgRPCServerProcess(app); innerErr != nil {

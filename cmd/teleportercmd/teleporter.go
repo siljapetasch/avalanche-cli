@@ -28,6 +28,8 @@ with Teleporter-Enabled Subnets.`,
 	app = injectedApp
 	// teleporter msg
 	cmd.AddCommand(newMsgCmd())
+	// teleporter deploy
+	cmd.AddCommand(newDeployCmd())
 	// teleporter relayer
 	cmd.AddCommand(newRelayerCmd())
 	return cmd
