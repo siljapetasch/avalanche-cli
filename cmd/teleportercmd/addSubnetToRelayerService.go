@@ -3,10 +3,10 @@
 package teleportercmd
 
 import (
-	"fmt"
-
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
+	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 
 	"github.com/spf13/cobra"
 )
@@ -46,14 +46,48 @@ func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
 
 	subnetName := args[0]
 
-	chainID, messengerAddress, key, err := getSubnetParams(network, subnetName)
+	relayerAddress, relayerPrivateKey, err := teleporter.GetRelayerKeyInfo(app.GetKeyPath(constants.AWMRelayerKeyName))
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(chainID)
-	fmt.Println(messengerAddress)
-	fmt.Println(key)
+	subnetID, chainID, messengerAddress, registryAddress, _, err := getSubnetParams(network, "c-chain")
+	if err != nil {
+		return err
+	}
+
+	if err = teleporter.UpdateRelayerConfig(
+		app.GetAWMRelayerServiceConfigPath(),
+		app.GetAWMRelayerStorageDir(),
+		relayerAddress,
+		relayerPrivateKey,
+		network,
+		subnetID.String(),
+		chainID.String(),
+		messengerAddress,
+		registryAddress,
+	); err != nil {
+		return err
+	}
+
+	subnetID, chainID, messengerAddress, registryAddress, _, err = getSubnetParams(network, subnetName)
+	if err != nil {
+		return err
+	}
+
+	if err = teleporter.UpdateRelayerConfig(
+		app.GetAWMRelayerServiceConfigPath(),
+		app.GetAWMRelayerStorageDir(),
+		relayerAddress,
+		relayerPrivateKey,
+		network,
+		subnetID.String(),
+		chainID.String(),
+		messengerAddress,
+		registryAddress,
+	); err != nil {
+		return err
+	}
 
 	return nil
 }

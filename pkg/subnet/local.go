@@ -622,7 +622,7 @@ func (d *LocalDeployer) doDeploy(chain string, chainGenesis []byte, genesisPath 
 			extraLocalNetworkDataPath := d.app.GetExtraLocalNetworkDataPath()
 			extraLocalNetworkData := ExtraLocalNetworkData{
 				CChainTeleporterMessengerAddress: cchainTeleporterMessengerAddress,
-				CChainTTeleporterRegistryAddress: cchainTeleporterRegistryAddress,
+				CChainTeleporterRegistryAddress:  cchainTeleporterRegistryAddress,
 			}
 			bs, err := json.Marshal(&extraLocalNetworkData)
 			if err != nil {
@@ -1129,7 +1129,7 @@ func GetChainIDs(endpoint string, chainName string) (string, string, error) {
 
 type ExtraLocalNetworkData struct {
 	CChainTeleporterMessengerAddress string
-	CChainTTeleporterRegistryAddress string
+	CChainTeleporterRegistryAddress  string
 }
 
 func GetExtraLocalNetworkData(app *application.Avalanche) (*ExtraLocalNetworkData, error) {

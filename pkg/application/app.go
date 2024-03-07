@@ -134,6 +134,10 @@ func (app *Avalanche) GetAWMRelayerServiceDir() string {
 	return filepath.Join(app.GetServicesDir(), constants.AWMRelayerInstallDir)
 }
 
+func (app *Avalanche) GetAWMRelayerServiceConfigPath() string {
+	return filepath.Join(app.GetAWMRelayerServiceDir(), constants.AWMRelayerConfigFilename)
+}
+
 func (app *Avalanche) GetExtraLocalNetworkDataPath() string {
 	return filepath.Join(app.GetRunDir(), constants.ExtraLocalNetworkDataFilename)
 }

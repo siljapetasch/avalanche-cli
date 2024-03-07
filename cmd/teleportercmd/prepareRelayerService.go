@@ -36,16 +36,11 @@ func prepareRelayerService(_ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	awmRelayerServicesDir := app.GetAWMRelayerServiceDir()
-	if err := os.MkdirAll(awmRelayerServicesDir, constants.DefaultPerms755); err != nil {
+	if err := os.MkdirAll(app.GetAWMRelayerServiceDir(), constants.DefaultPerms755); err != nil {
 		return err
 	}
-	awmRelayerConfigPath := filepath.Join(awmRelayerServicesDir, constants.AWMRelayerConfigFilename)
-	if err := os.WriteFile(awmRelayerConfigPath, []byte{}, constants.WriteReadReadPerms); err != nil {
-		return err
-	}
-	awmRelayerServicePath := filepath.Join(awmRelayerServicesDir, "awm-relayer.service")
-	awmRelayerServiceConf := fmt.Sprintf(string(awmRelayerServiceTemplate), usr.Username, usr.HomeDir, relayerBin, awmRelayerConfigPath)
+	awmRelayerServicePath := filepath.Join(app.GetAWMRelayerServiceDir(), "awm-relayer.service")
+	awmRelayerServiceConf := fmt.Sprintf(string(awmRelayerServiceTemplate), usr.Username, usr.HomeDir, relayerBin, app.GetAWMRelayerServiceConfigPath())
 	if err := os.WriteFile(awmRelayerServicePath, []byte(awmRelayerServiceConf), constants.WriteReadReadPerms); err != nil {
 		return err
 	}
