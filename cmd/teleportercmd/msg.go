@@ -24,13 +24,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+type MsgCmdFlags struct {
+	endpoint   string
 	useLocal   bool
 	useDevnet  bool
 	useFuji    bool
 	useMainnet bool
-	endpoint   string
-)
+}
+
+var msgCmdFlags MsgCmdFlags
 
 // avalanche teleporter msg
 func newMsgCmd() *cobra.Command {
@@ -42,40 +44,44 @@ func newMsgCmd() *cobra.Command {
 		RunE:         msg,
 		Args:         cobra.ExactArgs(3),
 	}
-	cmd.Flags().StringVar(&endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&useLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVar(&useDevnet, "devnet", false, "operate on a devnet network")
-	cmd.Flags().BoolVarP(&useFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&useFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&useMainnet, "mainnet", "m", false, "operate on mainnet")
+	cmd.Flags().StringVar(&msgCmdFlags.endpoint, "endpoint", "", "use the given endpoint for network operations")
+	cmd.Flags().BoolVarP(&msgCmdFlags.useLocal, "local", "l", false, "operate on a local network")
+	cmd.Flags().BoolVar(&msgCmdFlags.useDevnet, "devnet", false, "operate on a devnet network")
+	cmd.Flags().BoolVarP(&msgCmdFlags.useFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
+	cmd.Flags().BoolVarP(&msgCmdFlags.useFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
+	cmd.Flags().BoolVarP(&msgCmdFlags.useMainnet, "mainnet", "m", false, "operate on mainnet")
 	return cmd
 }
 
 func msg(_ *cobra.Command, args []string) error {
+	return msgWithLocalFlags(nil, args, msgCmdFlags)
+}
+
+func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error {
 	sourceSubnetName := args[0]
 	destSubnetName := args[1]
 	message := args[2]
 
 	// fix endpoint if available
-	if useDevnet && endpoint == "" {
+	if flags.useDevnet && flags.endpoint == "" {
 		var err error
-		endpoint, err = getDevnetEndpoint(sourceSubnetName)
+		flags.endpoint, err = getDevnetEndpoint(sourceSubnetName)
 		if err != nil {
 			return err
 		}
-		if endpoint == "" {
-			endpoint, err = getDevnetEndpoint(destSubnetName)
+		if flags.endpoint == "" {
+			flags.endpoint, err = getDevnetEndpoint(destSubnetName)
 			if err != nil {
 				return err
 			}
 		}
 	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		useLocal,
-		useDevnet,
-		useFuji,
-		useMainnet,
-		endpoint,
+		flags.useLocal,
+		flags.useDevnet,
+		flags.useFuji,
+		flags.useMainnet,
+		flags.endpoint,
 		true,
 		[]models.NetworkKind{models.Local, models.Devnet},
 	)
