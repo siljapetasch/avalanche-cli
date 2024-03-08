@@ -12,11 +12,11 @@ import (
 )
 
 type AddSubnetToRelayerServiceCmdFlags struct {
-	endpoint   string
-	useLocal   bool
-	useDevnet  bool
-	useFuji    bool
-	useMainnet bool
+	Endpoint   string
+	UseLocal   bool
+	UseDevnet  bool
+	UseFuji    bool
+	UseMainnet bool
 }
 
 var addSubnetToRelayerServiceCmdFlags AddSubnetToRelayerServiceCmdFlags
@@ -31,12 +31,12 @@ func newAddSubnetToRelayerServiceCmd() *cobra.Command {
 		RunE:         addSubnetToRelayerService,
 		Args:         cobra.ExactArgs(1),
 	}
-	cmd.Flags().StringVar(&addSubnetToRelayerServiceCmdFlags.endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.useLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVar(&addSubnetToRelayerServiceCmdFlags.useDevnet, "devnet", false, "operate on a devnet network")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.useFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.useFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.useMainnet, "mainnet", "m", false, "operate on mainnet")
+	cmd.Flags().StringVar(&addSubnetToRelayerServiceCmdFlags.Endpoint, "endpoint", "", "use the given endpoint for network operations")
+	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseLocal, "local", "l", false, "operate on a local network")
+	cmd.Flags().BoolVar(&addSubnetToRelayerServiceCmdFlags.UseDevnet, "devnet", false, "operate on a devnet network")
+	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
+	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
+	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseMainnet, "mainnet", "m", false, "operate on mainnet")
 	return cmd
 }
 
@@ -46,11 +46,11 @@ func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
 
 func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, flags AddSubnetToRelayerServiceCmdFlags) error {
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags.useLocal,
-		flags.useDevnet,
-		flags.useFuji,
-		flags.useMainnet,
-		"",
+		flags.UseLocal,
+		flags.UseDevnet,
+		flags.UseFuji,
+		flags.UseMainnet,
+		flags.Endpoint,
 		false,
 		[]models.NetworkKind{models.Local},
 	)

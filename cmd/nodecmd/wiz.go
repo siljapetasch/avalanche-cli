@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
+	"github.com/ava-labs/avalanche-cli/cmd/teleportercmd"
 	"github.com/ava-labs/avalanche-cli/pkg/ansible"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
@@ -241,12 +242,35 @@ func wiz(cmd *cobra.Command, args []string) error {
 	if err := waitForClusterSubnetStatus(clusterName, subnetName, blockchainID, status.Validating, validateCheckTimeout, validateCheckPoolTime); err != nil {
 		return err
 	}
+
+	isEVMGenesis, err := subnetcmd.HasSubnetEVMGenesis(subnetName)
+	if err != nil {
+		return err
+	}
+	if sc.TeleporterReady && isEVMGenesis {
+		ux.Logger.PrintToUser("")
+		ux.Logger.PrintToUser(logging.Green.Wrap("Setting up teleporter on subnet"))
+		ux.Logger.PrintToUser("")
+		clustersConfig, err := app.LoadClustersConfig()
+		if err != nil {
+			return err
+		}
+		flags := teleportercmd.DeployCmdFlags{
+			UseDevnet: true,
+			Endpoint:  clustersConfig.Clusters[clusterName].Network.Endpoint,
+		}
+		if err := teleportercmd.DeployWithLocalFlags(nil, []string{subnetName}, flags); err != nil {
+			return err
+		}
+	}
+
 	ux.Logger.PrintToUser("")
 	if clusterAlreadyExists {
 		ux.Logger.PrintToUser(logging.Green.Wrap("Devnet %s is now validating subnet %s"), clusterName, subnetName)
 	} else {
 		ux.Logger.PrintToUser(logging.Green.Wrap("Devnet %s is successfully created and is now validating subnet %s!"), clusterName, subnetName)
 	}
+
 	return nil
 }
 
