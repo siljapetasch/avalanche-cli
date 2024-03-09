@@ -52,6 +52,7 @@ func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, fl
 		flags.UseMainnet,
 		flags.Endpoint,
 		false,
+        "",
 		[]models.NetworkKind{models.Local},
 	)
 	if err != nil {

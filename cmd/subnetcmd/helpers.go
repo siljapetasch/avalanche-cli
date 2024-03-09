@@ -34,6 +34,7 @@ func GetNetworkFromCmdLineFlags(
 	useMainnet bool,
 	endpoint string,
 	askForDevnetEndpoint bool,
+    clusterName string,
 	supportedNetworkKinds []models.NetworkKind,
 ) (models.Network, error) {
 	// get network from flags
@@ -47,6 +48,15 @@ func GetNetworkFromCmdLineFlags(
 		network = models.FujiNetwork
 	case useMainnet:
 		network = models.MainnetNetwork
+    case clusterName != "":
+        var err error
+        network, err = app.GetClusterNetwork(clusterName)
+        if err != nil {
+			return models.UndefinedNetwork, err
+        }
+        network.Kind = models.Cluster
+        network.ClusterName = clusterName
+        return network, nil
 	}
 	if endpoint != "" {
 		network.Endpoint = endpoint

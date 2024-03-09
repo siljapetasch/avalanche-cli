@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-
 	"github.com/ava-labs/apm/apm"
 	"github.com/ava-labs/avalanche-cli/pkg/config"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
@@ -19,6 +18,8 @@ import (
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/subnet-evm/core"
+
+    "golang.org/x/exp/maps"
 )
 
 type Avalanche struct {
@@ -810,4 +811,51 @@ func (app *Avalanche) SetupMonitoringEnv() error {
 		return err
 	}
 	return monitoring.Setup(app.GetMonitoringDir())
+}
+
+func (app *Avalanche) ClusterExists(clusterName string) (bool, error) {
+	clustersConfig := models.ClustersConfig{}
+	if app.ClustersConfigExists() {
+		var err error
+		clustersConfig, err = app.LoadClustersConfig()
+		if err != nil {
+			return false, err
+		}
+	}
+	_, ok := clustersConfig.Clusters[clusterName]
+	return ok, nil
+}
+
+func (app *Avalanche) GetClusterConfig(clusterName string) (models.ClusterConfig, error) {
+	exists, err := app.ClusterExists(clusterName)
+	if err != nil {
+        return models.ClusterConfig{}, err
+	}
+	if !exists {
+        return models.ClusterConfig{}, fmt.Errorf("cluster %q does not exists", clusterName)
+	}
+	clustersConfig, err := app.LoadClustersConfig()
+	if err != nil {
+        return models.ClusterConfig{}, err
+	}
+    return clustersConfig.Clusters[clusterName], nil
+}
+
+func (app *Avalanche) GetClusterNetwork(clusterName string) (models.Network, error) {
+    clusterConfig, err := app.GetClusterConfig(clusterName)
+    if err != nil {
+        return models.UndefinedNetwork, err
+    }
+    return clusterConfig.Network, nil
+}
+
+func (app *Avalanche) ListClusterNames() ([]string, error) {
+	if !app.ClustersConfigExists() {
+        return []string{}, nil
+    }
+    clustersConfig, err := app.LoadClustersConfig()
+    if err != nil {
+        return false, err
+    }
+    return maps.Keys(clustersConfig.Clusters), nil
 }

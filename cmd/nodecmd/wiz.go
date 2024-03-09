@@ -113,7 +113,7 @@ func wiz(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		subnetName = args[1]
 	}
-	clusterAlreadyExists, err := clusterExists(clusterName)
+	clusterAlreadyExists, err := app.ClusterExists(clusterName)
 	if err != nil {
 		return err
 	}
@@ -403,7 +403,7 @@ func waitForClusterSubnetStatus(
 }
 
 func checkClusterIsADevnet(clusterName string) error {
-	exists, err := clusterExists(clusterName)
+	exists, err := app.ClusterExists(clusterName)
 	if err != nil {
 		return err
 	}

@@ -43,7 +43,7 @@ type Network struct {
 	Kind     NetworkKind
 	ID       uint32
 	Endpoint string
-	clusterName string
+	ClusterName string
 }
 
 var (
@@ -134,7 +134,7 @@ func (n Network) Name() string {
 	case Devnet:
 		name += " " + n.Endpoint
 	case Cluster:
-		name += " " + n.clusterName
+		name += " " + n.ClusterName
 	}
 	return name
 }

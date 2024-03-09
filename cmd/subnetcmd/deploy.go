@@ -39,6 +39,7 @@ var (
 	deployTestnet            bool
 	deployMainnet            bool
 	endpoint                 string
+    clusterName              string
 	sameControlKey           bool
 	keyName                  string
 	threshold                uint32
@@ -81,6 +82,7 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 		PersistentPostRun: handlePostRun,
 		Args:              cobra.ExactArgs(1),
 	}
+	cmd.Flags().StringVar(&clusterName, "cluster", "", "deploy to the given cluster")
 	cmd.Flags().StringVar(&endpoint, "endpoint", "", "use the given endpoint for network operations")
 	cmd.Flags().BoolVarP(&deployLocal, "local", "l", false, "deploy to a local network")
 	cmd.Flags().BoolVar(&deployDevnet, "devnet", false, "deploy to a devnet network")
@@ -312,11 +314,16 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		deployMainnet,
 		endpoint,
 		true,
+        clusterName,
 		[]models.NetworkKind{models.Local, models.Cluster, models.Devnet, models.Fuji, models.Mainnet},
 	)
 	if err != nil {
 		return err
 	}
+
+    fmt.Printf("%#v\n", network)
+    return nil
+
 
 	isEVMGenesis, err := HasSubnetEVMGenesis(chain)
 	if err != nil {

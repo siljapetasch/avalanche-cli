@@ -159,6 +159,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 		createOnMainnet,
 		"",
 		false,
+        "",
 		[]models.NetworkKind{models.Fuji, models.Devnet},
 	)
 	if err != nil {
