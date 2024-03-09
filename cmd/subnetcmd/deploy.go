@@ -312,7 +312,7 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		deployMainnet,
 		endpoint,
 		true,
-		[]models.NetworkKind{models.Local, models.Devnet, models.Fuji, models.Mainnet},
+		[]models.NetworkKind{models.Local, models.Cluster, models.Devnet, models.Fuji, models.Mainnet},
 	)
 	if err != nil {
 		return err

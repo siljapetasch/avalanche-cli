@@ -20,6 +20,7 @@ const (
 	Fuji
 	Local
 	Devnet
+	Cluster
 )
 
 func (nk NetworkKind) String() string {
@@ -32,6 +33,8 @@ func (nk NetworkKind) String() string {
 		return "Local Network"
 	case Devnet:
 		return "Devnet"
+	case Cluster:
+		return "Cluster"
 	}
 	return "invalid network"
 }
@@ -40,6 +43,7 @@ type Network struct {
 	Kind     NetworkKind
 	ID       uint32
 	Endpoint string
+	clusterName string
 }
 
 var (
@@ -49,6 +53,22 @@ var (
 	FujiNetwork      = NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint)
 	MainnetNetwork   = NewNetwork(Mainnet, avagoconstants.MainnetID, constants.MainnetAPIEndpoint)
 )
+
+func NetworkKindFromString(s string) NetworkKind {
+	switch s {
+	case Mainnet.String():
+		return Mainnet
+	case Fuji.String():
+		return Fuji
+	case Local.String():
+		return Local
+	case Cluster.String():
+		return Cluster
+	case Devnet.String():
+		return Devnet
+	}
+	return Undefined
+}
 
 func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
 	return Network{
@@ -63,6 +83,23 @@ func NewDevnetNetwork(ip string, port int) Network {
 	return NewNetwork(Devnet, constants.DevnetNetworkID, endpoint)
 }
 
+func NewStandardDevnetNetworkWithEndpoint(endpoint string) Network {
+	return NewNetwork(Devnet, constants.DevnetNetworkID, endpoint)
+}
+
+func StandardNetworkFromString(s string) Network {
+	switch s {
+	case Mainnet.String():
+		return MainnetNetwork
+	case Fuji.String():
+		return FujiNetwork
+	case Local.String():
+		return LocalNetwork
+	}
+	return UndefinedNetwork
+}
+
+// TODO: remove this. If Devnet or cluster, needs more info
 func NetworkFromString(s string) Network {
 	switch s {
 	case Mainnet.String():
@@ -92,7 +129,14 @@ func NetworkFromNetworkID(networkID uint32) Network {
 }
 
 func (n Network) Name() string {
-	return n.Kind.String()
+	name := n.Kind.String()
+	switch n.Kind {
+	case Devnet:
+		name += " " + n.Endpoint
+	case Cluster:
+		name += " " + n.clusterName
+	}
+	return name
 }
 
 func (n Network) CChainEndpoint() string {

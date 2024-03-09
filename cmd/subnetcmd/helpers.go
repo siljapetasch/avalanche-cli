@@ -12,9 +12,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func fillNetworkDetails(network *models.Network) error {
+func askForNetworkEndpoint(networkKind models.NetworkKind) (string, error) {
+	return app.Prompt.CaptureString(fmt.Sprintf("%s Network Endpoint", networkKind.String()))
+}
+
+func fillNetworkEndpoint(network *models.Network) error {
 	if network.Endpoint == "" {
-		endpoint, err := app.Prompt.CaptureString(fmt.Sprintf("%s Network Endpoint", network.Name()))
+		endpoint, err := app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", network.Kind.String()))
 		if err != nil {
 			return err
 		}
@@ -44,23 +48,36 @@ func GetNetworkFromCmdLineFlags(
 	case useMainnet:
 		network = models.MainnetNetwork
 	}
-
 	if endpoint != "" {
 		network.Endpoint = endpoint
 	}
 
 	// no flag was set, prompt user
 	if network.Kind == models.Undefined {
-		networkStr, err := app.Prompt.CaptureList(
+		networkKindStr, err := app.Prompt.CaptureList(
 			"Choose a network for the operation",
 			utils.Map(supportedNetworkKinds, func(n models.NetworkKind) string { return n.String() }),
 		)
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
-		network = models.NetworkFromString(networkStr)
+		network = models.StandardNetworkFromString(networkKindStr)
+		if network == models.UndefinedNetwork {
+			networkKind := models.NetworkKindFromString(networkKindStr)
+			switch networkKind {
+			case models.Devnet:
+				endpoint, err := askForNetworkEndpoint(networkKind)
+				if err != nil {
+					return models.UndefinedNetwork, err
+				}
+				return models.NewStandardDevnetNetworkWithEndpoint(endpoint), nil
+			}
+			return models.Network{}, fmt.Errorf("PEPE")
+		}
+
+
 		if askForDevnetEndpoint {
-			if err := fillNetworkDetails(&network); err != nil {
+			if err := fillNetworkEndpoint(&network); err != nil {
 				return models.UndefinedNetwork, err
 			}
 		}
@@ -86,7 +103,7 @@ func GetNetworkFromCmdLineFlags(
 		return models.UndefinedNetwork, fmt.Errorf("network flags %s are mutually exclusive", supportedNetworksFlags)
 	}
 	if askForDevnetEndpoint {
-		if err := fillNetworkDetails(&network); err != nil {
+		if err := fillNetworkEndpoint(&network); err != nil {
 			return models.UndefinedNetwork, err
 		}
 	}
