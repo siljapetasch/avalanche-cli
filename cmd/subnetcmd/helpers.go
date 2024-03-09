@@ -34,7 +34,7 @@ func GetNetworkFromCmdLineFlags(
 	useMainnet bool,
 	endpoint string,
 	askForDevnetEndpoint bool,
-    clusterName string,
+	clusterName string,
 	supportedNetworkKinds []models.NetworkKind,
 ) (models.Network, error) {
 	// get network from flags
@@ -48,15 +48,8 @@ func GetNetworkFromCmdLineFlags(
 		network = models.FujiNetwork
 	case useMainnet:
 		network = models.MainnetNetwork
-    case clusterName != "":
-        var err error
-        network, err = app.GetClusterNetwork(clusterName)
-        if err != nil {
-			return models.UndefinedNetwork, err
-        }
-        network.Kind = models.Cluster
-        network.ClusterName = clusterName
-        return network, nil
+	case clusterName != "":
+		return app.GetClusterNetwork(clusterName)
 	}
 	if endpoint != "" {
 		network.Endpoint = endpoint
@@ -75,6 +68,22 @@ func GetNetworkFromCmdLineFlags(
 		if network == models.UndefinedNetwork {
 			networkKind := models.NetworkKindFromString(networkKindStr)
 			switch networkKind {
+			case models.Cluster:
+				clusterNames, err := app.ListClusterNames()
+				if err != nil {
+					return models.UndefinedNetwork, err
+				}
+				if len(clusterNames) == 0 {
+					return models.UndefinedNetwork, fmt.Errorf("there are no clusters defined")
+				}
+				clusterName, err := app.Prompt.CaptureList(
+					"Choose a cluster",
+					clusterNames,
+				)
+				if err != nil {
+					return models.UndefinedNetwork, err
+				}
+				return app.GetClusterNetwork(clusterName)
 			case models.Devnet:
 				endpoint, err := askForNetworkEndpoint(networkKind)
 				if err != nil {
@@ -84,7 +93,6 @@ func GetNetworkFromCmdLineFlags(
 			}
 			return models.Network{}, fmt.Errorf("PEPE")
 		}
-
 
 		if askForDevnetEndpoint {
 			if err := fillNetworkEndpoint(&network); err != nil {

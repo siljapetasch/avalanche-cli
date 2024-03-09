@@ -83,7 +83,7 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 		flags.UseMainnet,
 		flags.Endpoint,
 		true,
-        "",
+		"",
 		[]models.NetworkKind{models.Local, models.Devnet},
 	)
 	if err != nil {

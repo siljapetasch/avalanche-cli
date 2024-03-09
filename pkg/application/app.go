@@ -8,18 +8,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/apm/apm"
 	"github.com/ava-labs/avalanche-cli/pkg/config"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/monitoring"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
+	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/subnet-evm/core"
 
-    "golang.org/x/exp/maps"
+	"golang.org/x/exp/maps"
 )
 
 type Avalanche struct {
@@ -829,33 +829,35 @@ func (app *Avalanche) ClusterExists(clusterName string) (bool, error) {
 func (app *Avalanche) GetClusterConfig(clusterName string) (models.ClusterConfig, error) {
 	exists, err := app.ClusterExists(clusterName)
 	if err != nil {
-        return models.ClusterConfig{}, err
+		return models.ClusterConfig{}, err
 	}
 	if !exists {
-        return models.ClusterConfig{}, fmt.Errorf("cluster %q does not exists", clusterName)
+		return models.ClusterConfig{}, fmt.Errorf("cluster %q does not exists", clusterName)
 	}
 	clustersConfig, err := app.LoadClustersConfig()
 	if err != nil {
-        return models.ClusterConfig{}, err
+		return models.ClusterConfig{}, err
 	}
-    return clustersConfig.Clusters[clusterName], nil
+	return clustersConfig.Clusters[clusterName], nil
 }
 
 func (app *Avalanche) GetClusterNetwork(clusterName string) (models.Network, error) {
-    clusterConfig, err := app.GetClusterConfig(clusterName)
-    if err != nil {
-        return models.UndefinedNetwork, err
-    }
-    return clusterConfig.Network, nil
+	clusterConfig, err := app.GetClusterConfig(clusterName)
+	if err != nil {
+		return models.UndefinedNetwork, err
+	}
+	network := clusterConfig.Network
+	network.ClusterName = clusterName
+	return network, nil
 }
 
 func (app *Avalanche) ListClusterNames() ([]string, error) {
 	if !app.ClustersConfigExists() {
-        return []string{}, nil
-    }
-    clustersConfig, err := app.LoadClustersConfig()
-    if err != nil {
-        return []string{}, err
-    }
-    return maps.Keys(clustersConfig.Clusters), nil
+		return []string{}, nil
+	}
+	clustersConfig, err := app.LoadClustersConfig()
+	if err != nil {
+		return []string{}, err
+	}
+	return maps.Keys(clustersConfig.Clusters), nil
 }

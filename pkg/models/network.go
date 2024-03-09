@@ -40,9 +40,9 @@ func (nk NetworkKind) String() string {
 }
 
 type Network struct {
-	Kind     NetworkKind
-	ID       uint32
-	Endpoint string
+	Kind        NetworkKind
+	ID          uint32
+	Endpoint    string
 	ClusterName string
 }
 
@@ -129,12 +129,12 @@ func NetworkFromNetworkID(networkID uint32) Network {
 }
 
 func (n Network) Name() string {
+	if n.ClusterName != "" {
+		return "Cluster " + n.ClusterName
+	}
 	name := n.Kind.String()
-	switch n.Kind {
-	case Devnet:
+	if n.Kind == Devnet {
 		name += " " + n.Endpoint
-	case Cluster:
-		name += " " + n.ClusterName
 	}
 	return name
 }

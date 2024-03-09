@@ -39,7 +39,7 @@ var (
 	deployTestnet            bool
 	deployMainnet            bool
 	endpoint                 string
-    clusterName              string
+	clusterName              string
 	sameControlKey           bool
 	keyName                  string
 	threshold                uint32
@@ -314,16 +314,15 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		deployMainnet,
 		endpoint,
 		true,
-        clusterName,
+		clusterName,
 		[]models.NetworkKind{models.Local, models.Cluster, models.Devnet, models.Fuji, models.Mainnet},
 	)
 	if err != nil {
 		return err
 	}
 
-    fmt.Printf("%#v\n", network)
-    return nil
-
+	fmt.Printf("%#v\n", network)
+	return nil
 
 	isEVMGenesis, err := HasSubnetEVMGenesis(chain)
 	if err != nil {

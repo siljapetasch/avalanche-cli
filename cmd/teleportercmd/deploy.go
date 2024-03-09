@@ -64,7 +64,7 @@ func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags)
 		flags.UseMainnet,
 		flags.Endpoint,
 		true,
-        "",
+		"",
 		[]models.NetworkKind{models.Local, models.Devnet},
 	)
 	if err != nil {
