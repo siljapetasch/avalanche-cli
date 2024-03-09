@@ -855,7 +855,7 @@ func (app *Avalanche) ListClusterNames() ([]string, error) {
     }
     clustersConfig, err := app.LoadClustersConfig()
     if err != nil {
-        return false, err
+        return []string{}, err
     }
     return maps.Keys(clustersConfig.Clusters), nil
 }
