@@ -283,5 +283,6 @@ func getDevnetEndpoint(subnetName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return sc.Networks[models.Devnet.String()].Endpoint, nil
+    _ = sc
+    return "", fmt.Errorf("PEPE")
 }

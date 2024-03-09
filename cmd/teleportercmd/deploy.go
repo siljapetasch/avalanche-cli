@@ -87,7 +87,6 @@ func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags)
 		return fmt.Errorf("subnet has not been deployed to %s", network.Name())
 	}
 	// deploy to subnet
-	network.UpdateEndpoint(sc.Networks[network.Name()].Endpoint)
 	blockchainID := sc.Networks[network.Name()].BlockchainID.String()
 	alreadyDeployed, teleporterMessengerAddress, teleporterRegistryAddress, err := teleporter.DeployAndFundRelayer(
 		app,

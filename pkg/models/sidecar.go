@@ -8,7 +8,6 @@ import (
 )
 
 type NetworkData struct {
-	Endpoint                    string
 	SubnetID                    ids.ID
 	TransferSubnetOwnershipTxID ids.ID
 	BlockchainID                ids.ID

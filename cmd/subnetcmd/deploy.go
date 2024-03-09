@@ -321,9 +321,6 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("%#v\n", network)
-	return nil
-
 	isEVMGenesis, err := HasSubnetEVMGenesis(chain)
 	if err != nil {
 		return err

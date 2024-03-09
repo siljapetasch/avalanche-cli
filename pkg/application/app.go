@@ -503,7 +503,6 @@ func (app *Avalanche) UpdateSidecarNetworks(
 		sc.Networks = make(map[string]models.NetworkData)
 	}
 	sc.Networks[network.Name()] = models.NetworkData{
-		Endpoint:                    network.Endpoint,
 		SubnetID:                    subnetID,
 		TransferSubnetOwnershipTxID: transferSubnetOwnershipTxID,
 		BlockchainID:                blockchainID,
