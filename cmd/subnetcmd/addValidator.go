@@ -91,7 +91,7 @@ func addValidator(_ *cobra.Command, args []string) error {
 		endpoint,
 		true,
 		"",
-		[]models.NetworkKind{models.Local, models.Devnet, models.Fuji, models.Mainnet},
+		[]NetworkOption{Local, Devnet, Fuji, Mainnet},
 	)
 	if err != nil {
 		return err

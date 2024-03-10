@@ -12,8 +12,52 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func askForNetworkEndpoint(networkKind models.NetworkKind) (string, error) {
-	return app.Prompt.CaptureString(fmt.Sprintf("%s Network Endpoint", networkKind.String()))
+type NetworkOption int64
+
+const (
+	Undefined NetworkOption = iota
+	Mainnet
+	Fuji
+	Local
+	Devnet
+	Cluster
+)
+
+func (n NetworkOption) String() string {
+	switch n {
+	case Mainnet:
+		return "Mainnet"
+	case Fuji:
+		return "Fuji"
+	case Local:
+		return "Local Network"
+	case Devnet:
+		return "Devnet"
+	case Cluster:
+		return "Cluster"
+	}
+	return "invalid network"
+}
+
+func networkOptionFromString(s string) NetworkOption {
+	switch s {
+	case "Mainnet":
+		return Mainnet
+	case "Fuji":
+		return Fuji
+	case "Local Network":
+		return Local
+	case "Devnet":
+		return Devnet
+	case "Cluster":
+		return Cluster
+	}
+	return Undefined
+}
+
+
+func askForNetworkEndpoint(networkOption NetworkOption) (string, error) {
+	return app.Prompt.CaptureString(fmt.Sprintf("%s Network Endpoint", networkOption.String()))
 }
 
 func fillNetworkEndpoint(network *models.Network) error {
@@ -35,7 +79,7 @@ func GetNetworkFromCmdLineFlags(
 	endpoint string,
 	askForDevnetEndpoint bool,
 	clusterName string,
-	supportedNetworkKinds []models.NetworkKind,
+	supportedNetworkOptions []NetworkOption,
 ) (models.Network, error) {
 	// get network from flags
 	network := models.UndefinedNetwork
@@ -57,42 +101,45 @@ func GetNetworkFromCmdLineFlags(
 
 	// no flag was set, prompt user
 	if network.Kind == models.Undefined {
-		networkKindStr, err := app.Prompt.CaptureList(
+		networkOptionStr, err := app.Prompt.CaptureList(
 			"Choose a network for the operation",
-			utils.Map(supportedNetworkKinds, func(n models.NetworkKind) string { return n.String() }),
+			utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
 		)
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
-		network = models.StandardNetworkFromString(networkKindStr)
-		if network == models.UndefinedNetwork {
-			networkKind := models.NetworkKindFromString(networkKindStr)
-			switch networkKind {
-			case models.Cluster:
-				clusterNames, err := app.ListClusterNames()
-				if err != nil {
-					return models.UndefinedNetwork, err
-				}
-				if len(clusterNames) == 0 {
-					return models.UndefinedNetwork, fmt.Errorf("there are no clusters defined")
-				}
-				clusterName, err := app.Prompt.CaptureList(
-					"Choose a cluster",
-					clusterNames,
-				)
-				if err != nil {
-					return models.UndefinedNetwork, err
-				}
-				return app.GetClusterNetwork(clusterName)
-			case models.Devnet:
-				endpoint, err := askForNetworkEndpoint(networkKind)
-				if err != nil {
-					return models.UndefinedNetwork, err
-				}
-				return models.NewStandardDevnetNetworkWithEndpoint(endpoint), nil
+		networkOption := networkOptionFromString(networkOptionStr)
+		switch networkOption {
+		case Local:
+			return models.LocalNetwork, nil
+		case Fuji:
+			return models.FujiNetwork, nil
+		case Mainnet:
+			return models.MainnetNetwork, nil
+		case Cluster:
+			clusterNames, err := app.ListClusterNames()
+			if err != nil {
+				return models.UndefinedNetwork, err
 			}
-			return models.Network{}, fmt.Errorf("PEPE")
+			if len(clusterNames) == 0 {
+				return models.UndefinedNetwork, fmt.Errorf("there are no clusters defined")
+			}
+			clusterName, err := app.Prompt.CaptureList(
+				"Choose a cluster",
+				clusterNames,
+			)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
+			return app.GetClusterNetwork(clusterName)
+		case Devnet:
+			endpoint, err := askForNetworkEndpoint(Devnet)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
+			return models.NewStandardDevnetNetworkWithEndpoint(endpoint), nil
 		}
+		return models.Network{}, fmt.Errorf("PEPE")
 
 		if askForDevnetEndpoint {
 			if err := fillNetworkEndpoint(&network); err != nil {
@@ -103,21 +150,22 @@ func GetNetworkFromCmdLineFlags(
 	}
 
 	// for err messages
-	networkFlags := map[models.NetworkKind]string{
-		models.Local:   "--local",
-		models.Devnet:  "--devnet",
-		models.Fuji:    "--fuji/--testnet",
-		models.Mainnet: "--mainnet",
+	networkFlags := map[NetworkOption]string{
+		Local:   "--local",
+		Devnet:  "--devnet",
+		Fuji:    "--fuji/--testnet",
+		Mainnet: "--mainnet",
+		Cluster: "--cluster",
 	}
-	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkKinds, func(n models.NetworkKind) string { return networkFlags[n] }), ", ")
+	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return networkFlags[n] }), ", ")
 
 	// unsupported network
-	if !slices.Contains(supportedNetworkKinds, network.Kind) {
+	if !slices.Contains(supportedNetworkOptions, network.Kind) {
 		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlags[network.Kind], supportedNetworksFlags)
 	}
 
 	// not mutually exclusive flag selection
-	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet}) {
+	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet, useDevnet, clusterName != ""}) {
 		return models.UndefinedNetwork, fmt.Errorf("network flags %s are mutually exclusive", supportedNetworksFlags)
 	}
 	if askForDevnetEndpoint {

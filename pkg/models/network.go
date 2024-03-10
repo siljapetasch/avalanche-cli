@@ -20,7 +20,6 @@ const (
 	Fuji
 	Local
 	Devnet
-	Cluster
 )
 
 func (nk NetworkKind) String() string {
@@ -33,8 +32,6 @@ func (nk NetworkKind) String() string {
 		return "Local Network"
 	case Devnet:
 		return "Devnet"
-	case Cluster:
-		return "Cluster"
 	}
 	return "invalid network"
 }
@@ -62,8 +59,6 @@ func NetworkKindFromString(s string) NetworkKind {
 		return Fuji
 	case Local.String():
 		return Local
-	case Cluster.String():
-		return Cluster
 	case Devnet.String():
 		return Devnet
 	}
