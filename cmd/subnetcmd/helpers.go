@@ -9,7 +9,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/cmd/flags"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"golang.org/x/exp/slices"
+//	"golang.org/x/exp/slices"
 )
 
 type NetworkOption int64
@@ -159,10 +159,12 @@ func GetNetworkFromCmdLineFlags(
 	}
 	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return networkFlags[n] }), ", ")
 
+	/*
 	// unsupported network
 	if !slices.Contains(supportedNetworkOptions, network.Kind) {
 		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlags[network.Kind], supportedNetworksFlags)
 	}
+	*/
 
 	// not mutually exclusive flag selection
 	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet, useDevnet, clusterName != ""}) {

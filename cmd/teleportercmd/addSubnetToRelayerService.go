@@ -5,7 +5,6 @@ package teleportercmd
 import (
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
-	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 
 	"github.com/spf13/cobra"
@@ -53,7 +52,7 @@ func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, fl
 		flags.Endpoint,
 		false,
 		"",
-		[]models.NetworkKind{models.Local},
+		[]subnetcmd.NetworkOption{subnetcmd.Local},
 	)
 	if err != nil {
 		return err

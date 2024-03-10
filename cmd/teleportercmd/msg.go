@@ -84,7 +84,7 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 		flags.Endpoint,
 		true,
 		"",
-		[]models.NetworkKind{models.Local, models.Devnet},
+		[]subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet},
 	)
 	if err != nil {
 		return err
