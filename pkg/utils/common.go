@@ -279,3 +279,12 @@ func ScriptLog(nodeID string, msg string, args ...interface{}) string {
 	formattedMsg := fmt.Sprintf(msg, args...)
 	return fmt.Sprintf("[%s] %s", nodeID, formattedMsg)
 }
+
+func GetIndexInSlice[T comparable](list []T, element T) (int, error) {
+	for i, val := range list {
+		if val == element {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("element not found")
+}

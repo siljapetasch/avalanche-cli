@@ -283,6 +283,6 @@ func getDevnetEndpoint(subnetName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-    _ = sc
-    return "", fmt.Errorf("PEPE")
+	_ = sc
+	return "", fmt.Errorf("PEPE")
 }

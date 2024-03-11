@@ -73,25 +73,26 @@ func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
 	}
 }
 
-func NewDevnetNetwork(ip string, port int) Network {
-	endpoint := fmt.Sprintf("http://%s:%d", ip, port)
-	return NewNetwork(Devnet, constants.DevnetNetworkID, endpoint)
+func NewLocalNetwork() Network {
+	return NewNetwork(Local, constants.LocalNetworkID, constants.LocalAPIEndpoint)
 }
 
-func NewStandardDevnetNetworkWithEndpoint(endpoint string) Network {
-	return NewNetwork(Devnet, constants.DevnetNetworkID, endpoint)
-}
-
-func StandardNetworkFromString(s string) Network {
-	switch s {
-	case Mainnet.String():
-		return MainnetNetwork
-	case Fuji.String():
-		return FujiNetwork
-	case Local.String():
-		return LocalNetwork
+func NewDevnetNetwork(endpoint string, id uint32) Network {
+	if endpoint == "" {
+		endpoint = constants.DevnetAPIEndpoint
 	}
-	return UndefinedNetwork
+	if id == 0 {
+		id = constants.DevnetNetworkID
+	}
+	return NewNetwork(Devnet, id, endpoint)
+}
+
+func NewFujiNetwork() Network {
+	return NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint)
+}
+
+func NewMainnetNetwork() Network {
+	return NewNetwork(Mainnet, avagoconstants.MainnetID, constants.MainnetAPIEndpoint)
 }
 
 // TODO: remove this. If Devnet or cluster, needs more info

@@ -315,7 +315,7 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		endpoint,
 		true,
 		clusterName,
-		[]NetworkOption{Local, Cluster, Devnet, Fuji, Mainnet},
+		[]NetworkOption{Local, Cluster, Fuji, Mainnet, Devnet},
 	)
 	if err != nil {
 		return err

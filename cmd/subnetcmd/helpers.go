@@ -9,7 +9,8 @@ import (
 	"github.com/ava-labs/avalanche-cli/cmd/flags"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-//	"golang.org/x/exp/slices"
+	"github.com/ava-labs/avalanchego/api/info"
+	"golang.org/x/exp/slices"
 )
 
 type NetworkOption int64
@@ -55,101 +56,18 @@ func networkOptionFromString(s string) NetworkOption {
 	return Undefined
 }
 
-
-func askForNetworkEndpoint(networkOption NetworkOption) (string, error) {
-	return app.Prompt.CaptureString(fmt.Sprintf("%s Network Endpoint", networkOption.String()))
-}
-
-func fillNetworkEndpoint(network *models.Network) error {
-	if network.Endpoint == "" {
-		endpoint, err := app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", network.Kind.String()))
-		if err != nil {
-			return err
-		}
-		network.Endpoint = endpoint
-	}
-	return nil
-}
-
 func GetNetworkFromCmdLineFlags(
 	useLocal bool,
 	useDevnet bool,
 	useFuji bool,
 	useMainnet bool,
 	endpoint string,
-	askForDevnetEndpoint bool,
+	requireDevnetEndpointSpecification bool,
 	clusterName string,
 	supportedNetworkOptions []NetworkOption,
 ) (models.Network, error) {
-	// get network from flags
-	network := models.UndefinedNetwork
-	switch {
-	case useLocal:
-		network = models.LocalNetwork
-	case useDevnet:
-		network = models.DevnetNetwork
-	case useFuji:
-		network = models.FujiNetwork
-	case useMainnet:
-		network = models.MainnetNetwork
-	case clusterName != "":
-		return app.GetClusterNetwork(clusterName)
-	}
-	if endpoint != "" {
-		network.Endpoint = endpoint
-	}
-
-	// no flag was set, prompt user
-	if network.Kind == models.Undefined {
-		networkOptionStr, err := app.Prompt.CaptureList(
-			"Choose a network for the operation",
-			utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
-		)
-		if err != nil {
-			return models.UndefinedNetwork, err
-		}
-		networkOption := networkOptionFromString(networkOptionStr)
-		switch networkOption {
-		case Local:
-			return models.LocalNetwork, nil
-		case Fuji:
-			return models.FujiNetwork, nil
-		case Mainnet:
-			return models.MainnetNetwork, nil
-		case Cluster:
-			clusterNames, err := app.ListClusterNames()
-			if err != nil {
-				return models.UndefinedNetwork, err
-			}
-			if len(clusterNames) == 0 {
-				return models.UndefinedNetwork, fmt.Errorf("there are no clusters defined")
-			}
-			clusterName, err := app.Prompt.CaptureList(
-				"Choose a cluster",
-				clusterNames,
-			)
-			if err != nil {
-				return models.UndefinedNetwork, err
-			}
-			return app.GetClusterNetwork(clusterName)
-		case Devnet:
-			endpoint, err := askForNetworkEndpoint(Devnet)
-			if err != nil {
-				return models.UndefinedNetwork, err
-			}
-			return models.NewStandardDevnetNetworkWithEndpoint(endpoint), nil
-		}
-		return models.Network{}, fmt.Errorf("PEPE")
-
-		if askForDevnetEndpoint {
-			if err := fillNetworkEndpoint(&network); err != nil {
-				return models.UndefinedNetwork, err
-			}
-		}
-		return network, nil
-	}
-
-	// for err messages
+	var err error
+	// supported flags
 	networkFlags := map[NetworkOption]string{
 		Local:   "--local",
 		Devnet:  "--devnet",
@@ -158,22 +76,96 @@ func GetNetworkFromCmdLineFlags(
 		Cluster: "--cluster",
 	}
 	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return networkFlags[n] }), ", ")
-
-	/*
-	// unsupported network
-	if !slices.Contains(supportedNetworkOptions, network.Kind) {
-		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlags[network.Kind], supportedNetworksFlags)
+	// received option
+	networkOption := Undefined
+	switch {
+	case useLocal:
+		networkOption = Local
+	case useDevnet:
+		networkOption = Devnet
+	case useFuji:
+		networkOption = Fuji
+	case useMainnet:
+		networkOption = Mainnet
+	case clusterName != "":
+		networkOption = Cluster
 	}
-	*/
-
-	// not mutually exclusive flag selection
-	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet, useDevnet, clusterName != ""}) {
+	// unsupported option
+	if networkOption != Undefined && !slices.Contains(supportedNetworkOptions, networkOption) {
+		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlags[networkOption], supportedNetworksFlags)
+	}
+	// mutual exclusion
+	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet, clusterName != ""}) {
 		return models.UndefinedNetwork, fmt.Errorf("network flags %s are mutually exclusive", supportedNetworksFlags)
 	}
-	if askForDevnetEndpoint {
-		if err := fillNetworkEndpoint(&network); err != nil {
+
+	if networkOption == Undefined {
+		// undefined, so prompt
+		clusterNames, err := app.ListClusterNames()
+		if err != nil {
 			return models.UndefinedNetwork, err
 		}
+		if len(clusterNames) == 0 {
+			if index, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {
+				supportedNetworkOptions = append(supportedNetworkOptions[:index], supportedNetworkOptions[index+1:]...)
+			}
+		}
+		networkOptionStr, err := app.Prompt.CaptureList(
+			"Choose a network for the operation",
+			utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
+		)
+		if err != nil {
+			return models.UndefinedNetwork, err
+		}
+		networkOption = networkOptionFromString(networkOptionStr)
+		switch networkOption {
+		case Cluster:
+			clusterName, err = app.Prompt.CaptureList(
+				"Choose a cluster",
+				clusterNames,
+			)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
+		}
+	}
+
+	if networkOption == Devnet && endpoint == "" && requireDevnetEndpointSpecification {
+		endpoint, err = app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", networkOption.String()), false)
+		if err != nil {
+			return models.UndefinedNetwork, err
+		}
+	}
+
+	network := models.UndefinedNetwork
+	switch networkOption {
+	case Local:
+		network = models.NewLocalNetwork()
+	case Devnet:
+		networkID := uint32(0)
+		if endpoint != "" {
+			infoClient := info.NewClient(endpoint)
+			ctx, cancel := utils.GetAPIContext()
+			defer cancel()
+			networkID, err = infoClient.GetNetworkID(ctx)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
+		}
+		network = models.NewDevnetNetwork(endpoint, networkID)
+	case Fuji:
+		network = models.NewFujiNetwork()
+	case Mainnet:
+		network = models.NewMainnetNetwork()
+	case Cluster:
+		network, err = app.GetClusterNetwork(clusterName)
+		if err != nil {
+			return models.UndefinedNetwork, err
+		}
+	}
+	// on all cases, enable user setting specific endpoint
+	if endpoint != "" {
+		network.Endpoint = endpoint
 	}
 
 	return network, nil

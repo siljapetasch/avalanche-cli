@@ -166,13 +166,14 @@ func setupDevnet(clusterName string, hosts []*models.Host, apiNodeIPMap map[stri
 	}
 
 	// set devnet network
-	networkEndpoint := ""
+	endpointIP := ""
 	if len(apiNodeIPMap) > 0 {
-		networkEndpoint = maps.Values(apiNodeIPMap)[0]
+		endpointIP = maps.Values(apiNodeIPMap)[0]
 	} else {
-		networkEndpoint = ansibleHosts[ansibleHostIDs[0]].IP
+		endpointIP = ansibleHosts[ansibleHostIDs[0]].IP
 	}
-	network := models.NewDevnetNetwork(networkEndpoint, constants.AvalanchegoAPIPort)
+	endpoint := fmt.Sprintf("http://%s:%d", endpointIP, constants.AvalanchegoAPIPort)
+	network := models.NewDevnetNetwork(endpoint, 0)
 
 	// get random staking key for devnet genesis
 	k, err := key.NewSoft(network.ID)
