@@ -49,9 +49,10 @@ var (
 
 func NewNetwork(kind NetworkKind, id uint32, endpoint string, clusterName string) Network {
 	return Network{
-		Kind:     kind,
-		ID:       id,
-		Endpoint: endpoint,
+		Kind:        kind,
+		ID:          id,
+		Endpoint:    endpoint,
+		ClusterName: clusterName,
 	}
 }
 

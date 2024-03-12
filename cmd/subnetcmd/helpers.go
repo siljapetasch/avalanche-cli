@@ -93,23 +93,85 @@ func AddNetworkFlagsToCmd(cmd *cobra.Command, networkFlags *NetworkFlags, always
 	}
 }
 
+func NetworkFromName(networkName string) (models.Network, error) {
+	switch {
+	case strings.HasPrefix(networkName, models.Mainnet.String()):
+		return models.NewMainnetNetwork(), nil
+	case strings.HasPrefix(networkName, models.Fuji.String()):
+		return models.NewFujiNetwork(), nil
+	case strings.HasPrefix(networkName, models.Local.String()):
+		return models.NewLocalNetwork(), nil
+	case strings.HasPrefix(networkName, models.Devnet.String()):
+		parts := strings.Split(networkName, " ")
+		if len(parts) != 2 {
+			return models.UndefinedNetwork, fmt.Errorf("expected 'Devnet Endpoint' on network name %s", networkName)
+		}
+		return models.NewLocalNetwork(), nil
+	case strings.HasPrefix(networkName, "Cluster"):
+		parts := strings.Split(networkName, " ")
+		if len(parts) != 2 {
+			return models.UndefinedNetwork, fmt.Errorf("expected 'Cluster clusterName' on network name %s", networkName)
+		}
+		clusterName := parts[1]
+		return app.GetClusterNetwork(clusterName)
+	}
+	return models.UndefinedNetwork, fmt.Errorf("invalid network name %q", networkName)
+}
+
 func GetNetworkFromCmdLineFlags(
 	networkFlags NetworkFlags,
 	requireDevnetEndpointSpecification bool,
 	supportedNetworkOptions []NetworkOption,
 	subnetName string,
 ) (models.Network, error) {
+	scClusterNames := []string{}
+	scDevnetEndpoints := []string{}
 	if subnetName != "" {
-		// get supported networks from sidecar
+		// update supported networks from networks deployed onto subnet
 		sc, err := app.LoadSidecar(subnetName)
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
-		for networkName, _ := range sc.Networks {
-			fmt.Println(networkName)
+		filteredSupportedNetworkOptions := []NetworkOption{}
+		for _, networkOption := range supportedNetworkOptions {
+			isInSidecar := false
+			for networkName, _ := range sc.Networks {
+				if strings.HasPrefix(networkName, networkOption.String()) {
+					isInSidecar = true
+				}
+			}
+			if isInSidecar {
+				filteredSupportedNetworkOptions = append(filteredSupportedNetworkOptions, networkOption)
+			}
+		}
+		supportedNetworkOptions = filteredSupportedNetworkOptions
+		// get valid cluster names from sidecar
+		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {
+			for networkName, _ := range sc.Networks {
+				if strings.HasPrefix(networkName, Cluster.String()) {
+					parts := strings.Split(networkName, " ")
+					if len(parts) != 2 {
+						return models.UndefinedNetwork, fmt.Errorf("expected 'Cluster clusterName' on network name %s", networkName)
+					}
+					clusterName := parts[1]
+					scClusterNames = append(scClusterNames, clusterName)
+				}
+			}
+		}
+		// get devnet endpoints from sidecar
+		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Devnet); err == nil {
+			for networkName, _ := range sc.Networks {
+				if strings.HasPrefix(networkName, Devnet.String()) {
+					parts := strings.Split(networkName, " ")
+					if len(parts) != 2 {
+						return models.UndefinedNetwork, fmt.Errorf("expected 'Devnet endpoint' on network name %s", networkName)
+					}
+					endpoint := parts[1]
+					scDevnetEndpoints = append(scDevnetEndpoints, endpoint)
+				}
+			}
 		}
 	}
-	return models.UndefinedNetwork, fmt.Errorf("PEPE")
 
 	var err error
 	// supported flags
@@ -137,7 +199,19 @@ func GetNetworkFromCmdLineFlags(
 	}
 	// unsupported option
 	if networkOption != Undefined && !slices.Contains(supportedNetworkOptions, networkOption) {
-		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlagsMap[networkOption], supportedNetworksFlags)
+		errMsg := fmt.Errorf("network flag %s is not supported. use one of %s", networkFlagsMap[networkOption], supportedNetworksFlags)
+		if subnetName != "" {
+			clustersMsg := ""
+			endpointsMsg := ""
+			if len(scClusterNames) != 0 {
+				clustersMsg = fmt.Sprintf(". valid clusters: [%s]", strings.Join(scClusterNames, ", "))
+			}
+			if len(scDevnetEndpoints) != 0 {
+				endpointsMsg = fmt.Sprintf(". valid devnet endpoints: [%s]", strings.Join(scDevnetEndpoints, ", "))
+			}
+			errMsg = fmt.Errorf("network flag %s is not supported on subnet %s. use one of %s%s%s", networkFlagsMap[networkOption], subnetName, supportedNetworksFlags, clustersMsg, endpointsMsg)
+		}
+		return models.UndefinedNetwork, errMsg
 	}
 	// mutual exclusion
 	if !flags.EnsureMutuallyExclusive([]bool{networkFlags.UseLocal, networkFlags.UseDevnet, networkFlags.UseFuji, networkFlags.UseMainnet, networkFlags.ClusterName != ""}) {
@@ -149,6 +223,9 @@ func GetNetworkFromCmdLineFlags(
 		clusterNames, err := app.ListClusterNames()
 		if err != nil {
 			return models.UndefinedNetwork, err
+		}
+		if subnetName != "" {
+			clusterNames = scClusterNames
 		}
 		if len(clusterNames) == 0 {
 			if index, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {

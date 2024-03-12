@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	//"github.com/ava-labs/avalanche-cli/cmd/flags"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanchego/ids"
@@ -24,7 +23,7 @@ var (
 	validatorsMainnet bool
 )
 
-var validatorsSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+var validatorsSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet, Cluster, Devnet}
 
 // avalanche subnet validators
 func newValidatorsCmd() *cobra.Command {
@@ -42,47 +41,20 @@ severarl statistics about them.`,
 }
 
 func printValidators(_ *cobra.Command, args []string) error {
+	subnetName := args[0]
 
 	network, err := GetNetworkFromCmdLineFlags(
 		globalNetworkFlags,
 		false,
 		validatorsSupportedNetworkOptions,
-		"",
+		subnetName,
 	)
 	if err != nil {
 		return err
 	}
 
-	/*
-		if !flags.EnsureMutuallyExclusive([]bool{validatorsLocal, validatorsTestnet, validatorsMainnet}) {
-			return errMutuallyExlusiveNetworks
-		}
-
-		network := models.UndefinedNetwork
-		switch {
-		case validatorsLocal:
-			network = models.LocalNetwork
-		case validatorsTestnet:
-			network = models.FujiNetwork
-		case validatorsMainnet:
-			network = models.MainnetNetwork
-		}
-
-		if network.Kind == models.Undefined {
-			// no flag was set, prompt user
-			networkStr, err := app.Prompt.CaptureList(
-				"Choose a network to list validators from",
-				[]string{models.Local.String(), models.Fuji.String(), models.Mainnet.String()},
-			)
-			if err != nil {
-				return err
-			}
-			network = models.NetworkFromString(networkStr)
-		}
-	*/
-
 	// get the subnetID
-	sc, err := app.LoadSidecar(args[0])
+	sc, err := app.LoadSidecar(subnetName)
 	if err != nil {
 		return err
 	}
