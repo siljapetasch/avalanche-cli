@@ -27,10 +27,6 @@ import (
 )
 
 const (
-	localFlag         = "local"
-	fujiFlag          = "fuji"
-	testnetFlag       = "testnet"
-	mainnetFlag       = "mainnet"
 	allFlag           = "all-networks"
 	pchainFlag        = "pchain"
 	cchainFlag        = "cchain"
@@ -40,16 +36,15 @@ const (
 )
 
 var (
-	local         bool
-	testnet       bool
-	mainnet       bool
-	all           bool
-	pchain        bool
-	cchain        bool
-	xchain        bool
-	useNanoAvax   bool
-	ledgerIndices []uint
-	subnetName    string
+	listSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
+	listNetworkCmdFlags         subnetcmd.NetworkFlags
+	all                         bool
+	pchain                      bool
+	cchain                      bool
+	xchain                      bool
+	useNanoAvax                 bool
+	ledgerIndices               []uint
+	subnetName                  string
 )
 
 // avalanche subnet list
@@ -62,34 +57,7 @@ keys or for the ledger addresses associated to certain indices.`,
 		RunE:         listKeys,
 		SilenceUsage: true,
 	}
-	cmd.Flags().BoolVarP(
-		&local,
-		localFlag,
-		"l",
-		false,
-		"list local network addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&testnet,
-		fujiFlag,
-		"f",
-		false,
-		"list testnet (fuji) network addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&testnet,
-		testnetFlag,
-		"t",
-		false,
-		"list testnet (fuji) network addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&mainnet,
-		mainnetFlag,
-		"m",
-		false,
-		"list mainnet network addresses",
-	)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &listNetworkCmdFlags, false, listSupportedNetworkOptions)
 	cmd.Flags().BoolVarP(
 		&all,
 		allFlag,
@@ -203,25 +171,25 @@ type addressInfo struct {
 func listKeys(*cobra.Command, []string) error {
 	var addrInfos []addressInfo
 	networks := []models.Network{}
-	if local || all {
-		networks = append(networks, models.LocalNetwork)
+	if listNetworkCmdFlags.UseLocal || all {
+		networks = append(networks, models.NewLocalNetwork())
 	}
-	if testnet || all {
-		networks = append(networks, models.FujiNetwork)
+	if listNetworkCmdFlags.UseFuji || all {
+		networks = append(networks, models.NewFujiNetwork())
 	}
-	if mainnet || all {
-		networks = append(networks, models.MainnetNetwork)
+	if listNetworkCmdFlags.UseMainnet || all {
+		networks = append(networks, models.NewMainnetNetwork())
 	}
 	if len(networks) == 0 {
-		// no flag was set, prompt user
-		networkStr, err := app.Prompt.CaptureList(
-			"Choose network for which to list addresses",
-			[]string{models.Mainnet.String(), models.Fuji.String(), models.Local.String()},
+		network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+			subnetcmd.NetworkFlags{},
+			false,
+			listSupportedNetworkOptions,
+			"",
 		)
 		if err != nil {
 			return err
 		}
-		network := models.NetworkFromString(networkStr)
 		networks = append(networks, network)
 	}
 	queryLedger := len(ledgerIndices) > 0

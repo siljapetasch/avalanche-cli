@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/key"
-	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
@@ -41,16 +41,18 @@ const (
 )
 
 var (
-	send                bool
-	receive             bool
-	keyName             string
-	ledgerIndex         uint32
-	force               bool
-	receiverAddrStr     string
-	amountFlt           float64
-	receiveRecoveryStep uint64
-	PToX                bool
-	PToP                bool
+	transferSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
+	transferNetworkCmdFlags         subnetcmd.NetworkFlags
+	send                            bool
+	receive                         bool
+	keyName                         string
+	ledgerIndex                     uint32
+	force                           bool
+	receiverAddrStr                 string
+	amountFlt                       float64
+	receiveRecoveryStep             uint64
+	PToX                            bool
+	PToP                            bool
 )
 
 func newTransferCmd() *cobra.Command {
@@ -62,6 +64,7 @@ func newTransferCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(0),
 		SilenceUsage: true,
 	}
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &transferNetworkCmdFlags, false, transferSupportedNetworkOptions)
 	cmd.Flags().BoolVar(
 		&PToX,
 		"fund-x-chain",
@@ -74,40 +77,11 @@ func newTransferCmd() *cobra.Command {
 		false,
 		"fund P-Chain account on target",
 	)
-	cmd.Flags().BoolVarP(
+	cmd.Flags().BoolVar(
 		&force,
 		forceFlag,
-		"f",
 		false,
 		"avoid transfer confirmation",
-	)
-	cmd.Flags().BoolVarP(
-		&local,
-		localFlag,
-		"l",
-		false,
-		"transfer between local network addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&testnet,
-		fujiFlag,
-		"u",
-		false,
-		"transfer between testnet (fuji) addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&testnet,
-		testnetFlag,
-		"t",
-		false,
-		"transfer between testnet (fuji) addresses",
-	)
-	cmd.Flags().BoolVarP(
-		&mainnet,
-		mainnetFlag,
-		"m",
-		false,
-		"transfer between mainnet addresses",
 	)
 	cmd.Flags().BoolVarP(
 		&send,
@@ -170,26 +144,15 @@ func transferF(*cobra.Command, []string) error {
 		return fmt.Errorf("only one between a keyname or a ledger index must be given")
 	}
 
-	var network models.Network
-	switch {
-	case local:
-		network = models.LocalNetwork
-	case testnet:
-		network = models.FujiNetwork
-	case mainnet:
-		network = models.MainnetNetwork
-	default:
-		networkStr, err := app.Prompt.CaptureList(
-			"Network to use",
-			[]string{models.Mainnet.String(), models.Fuji.String(), models.Local.String()},
-		)
-		if err != nil {
-			return err
-		}
-		network = models.NetworkFromString(networkStr)
+	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+		transferNetworkCmdFlags,
+		false,
+		transferSupportedNetworkOptions,
+		"",
+	)
+	if err != nil {
+		return err
 	}
-
-	var err error
 
 	if !send && !receive {
 		option, err := app.Prompt.CaptureList(
