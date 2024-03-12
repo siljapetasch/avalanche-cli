@@ -253,9 +253,19 @@ func GetNetworkFromCmdLineFlags(
 	}
 
 	if networkOption == Devnet && networkFlags.Endpoint == "" && requireDevnetEndpointSpecification {
-		networkFlags.Endpoint, err = app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", networkOption.String()), false)
-		if err != nil {
-			return models.UndefinedNetwork, err
+		if len(scDevnetEndpoints) != 0 {
+			networkFlags.Endpoint, err = app.Prompt.CaptureList(
+				"Choose an endpoint",
+				scDevnetEndpoints,
+			)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
+		} else {
+			networkFlags.Endpoint, err = app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", networkOption.String()), false)
+			if err != nil {
+				return models.UndefinedNetwork, err
+			}
 		}
 	}
 
