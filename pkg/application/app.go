@@ -701,7 +701,7 @@ func (app *Avalanche) LoadClustersConfig() (models.ClustersConfig, error) {
 		for clusterName, nodes := range clustersConfigV0.Clusters {
 			clustersConfig.Clusters[clusterName] = models.ClusterConfig{
 				Nodes:   nodes,
-				Network: models.FujiNetwork,
+				Network: models.NewFujiNetwork(),
 			}
 		}
 		return clustersConfig, err
@@ -845,8 +845,7 @@ func (app *Avalanche) GetClusterNetwork(clusterName string) (models.Network, err
 	if err != nil {
 		return models.UndefinedNetwork, err
 	}
-	network := clusterConfig.Network
-	network.ClusterName = clusterName
+	network := models.NewNetworkFromCluster(clusterConfig.Network, clusterName)
 	return network, nil
 }
 

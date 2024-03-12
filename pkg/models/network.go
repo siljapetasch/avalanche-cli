@@ -45,27 +45,9 @@ type Network struct {
 
 var (
 	UndefinedNetwork = Network{}
-	LocalNetwork     = NewNetwork(Local, constants.LocalNetworkID, constants.LocalAPIEndpoint)
-	DevnetNetwork    = NewNetwork(Devnet, constants.DevnetNetworkID, constants.DevnetAPIEndpoint)
-	FujiNetwork      = NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint)
-	//MainnetNetwork   = NewNetwork(Mainnet, avagoconstants.MainnetID, constants.MainnetAPIEndpoint)
 )
 
-func NetworkKindFromString(s string) NetworkKind {
-	switch s {
-	case Mainnet.String():
-		return Mainnet
-	case Fuji.String():
-		return Fuji
-	case Local.String():
-		return Local
-	case Devnet.String():
-		return Devnet
-	}
-	return Undefined
-}
-
-func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
+func NewNetwork(kind NetworkKind, id uint32, endpoint string, clusterName string) Network {
 	return Network{
 		Kind:     kind,
 		ID:       id,
@@ -74,7 +56,7 @@ func NewNetwork(kind NetworkKind, id uint32, endpoint string) Network {
 }
 
 func NewLocalNetwork() Network {
-	return NewNetwork(Local, constants.LocalNetworkID, constants.LocalAPIEndpoint)
+	return NewNetwork(Local, constants.LocalNetworkID, constants.LocalAPIEndpoint, "")
 }
 
 func NewDevnetNetwork(endpoint string, id uint32) Network {
@@ -84,30 +66,19 @@ func NewDevnetNetwork(endpoint string, id uint32) Network {
 	if id == 0 {
 		id = constants.DevnetNetworkID
 	}
-	return NewNetwork(Devnet, id, endpoint)
+	return NewNetwork(Devnet, id, endpoint, "")
 }
 
 func NewFujiNetwork() Network {
-	return NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint)
+	return NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint, "")
 }
 
 func NewMainnetNetwork() Network {
-	return NewNetwork(Mainnet, avagoconstants.MainnetID, constants.MainnetAPIEndpoint)
+	return NewNetwork(Mainnet, avagoconstants.MainnetID, constants.MainnetAPIEndpoint, "")
 }
 
-// TODO: remove this. If Devnet or cluster, needs more info
-func NetworkFromString(s string) Network {
-	switch s {
-	case Mainnet.String():
-		return NewMainnetNetwork()
-	case Fuji.String():
-		return FujiNetwork
-	case Local.String():
-		return LocalNetwork
-	case Devnet.String():
-		return DevnetNetwork
-	}
-	return UndefinedNetwork
+func NewNetworkFromCluster(n Network, clusterName string) Network {
+	return NewNetwork(n.Kind, n.ID, n.Endpoint, clusterName)
 }
 
 func NetworkFromNetworkID(networkID uint32) Network {
@@ -115,11 +86,9 @@ func NetworkFromNetworkID(networkID uint32) Network {
 	case avagoconstants.MainnetID:
 		return NewMainnetNetwork()
 	case avagoconstants.FujiID:
-		return FujiNetwork
+		return NewFujiNetwork()
 	case constants.LocalNetworkID:
-		return LocalNetwork
-	case constants.DevnetNetworkID:
-		return DevnetNetwork
+		return NewLocalNetwork()
 	}
 	return UndefinedNetwork
 }

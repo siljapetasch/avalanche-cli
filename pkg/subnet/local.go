@@ -566,7 +566,7 @@ func (d *LocalDeployer) doDeploy(chain string, chainGenesis []byte, genesisPath 
 		teleporterRegistryAddress  string
 	)
 	if sc.TeleporterReady && !skipTeleporter {
-		network := models.LocalNetwork
+		network := models.NewLocalNetwork()
 		// get teleporter key address for ui
 		k, err := key.LoadSoft(network.ID, d.app.GetKeyPath(sc.TeleporterKey))
 		if err != nil {

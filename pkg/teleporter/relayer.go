@@ -38,7 +38,7 @@ func GetRelayerKeyInfo(keyPath string) (string, string, error) {
 		err error
 	)
 	if utils.FileExists(keyPath) {
-		k, err = key.LoadSoft(models.LocalNetwork.ID, keyPath)
+		k, err = key.LoadSoft(models.NewLocalNetwork().ID, keyPath)
 		if err != nil {
 			return "", "", err
 		}

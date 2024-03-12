@@ -464,7 +464,7 @@ func handleValidatorJoinElasticSubnetLocal(sc models.Sidecar, network models.Net
 		return err
 	}
 	printAddPermissionlessValOutput(txID, nodeID, network, start, endTime, stakedTokenAmount)
-	if err = app.UpdateSidecarPermissionlessValidator(&sc, models.LocalNetwork, nodeID.String(), txID); err != nil {
+	if err = app.UpdateSidecarPermissionlessValidator(&sc, models.NewLocalNetwork(), nodeID.String(), txID); err != nil {
 		return fmt.Errorf("joining permissionless subnet was successful, but failed to update sidecar: %w", err)
 	}
 	return nil

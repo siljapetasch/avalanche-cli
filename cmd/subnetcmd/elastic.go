@@ -422,7 +422,7 @@ func transformElasticSubnetLocal(sc models.Sidecar, subnetName string, tokenName
 	if err = app.CreateElasticSubnetConfig(subnetName, &elasticSubnetConfig); err != nil {
 		return err
 	}
-	if err = app.UpdateSidecarElasticSubnet(&sc, models.LocalNetwork, subnetID, assetID, txID, tokenName, tokenSymbol); err != nil {
+	if err = app.UpdateSidecarElasticSubnet(&sc, models.NewLocalNetwork(), subnetID, assetID, txID, tokenName, tokenSymbol); err != nil {
 		return fmt.Errorf("elastic subnet transformation was successful, but failed to update sidecar: %w", err)
 	}
 
@@ -578,7 +578,7 @@ func checkAllLocalNodesAreCurrentValidators(subnetID ids.ID) error {
 }
 
 func transformValidatorsToPermissionlessLocal(sc models.Sidecar, subnetID ids.ID, subnetName string) error {
-	stakedTokenAmount, err := promptStakeAmount(subnetName, true, models.LocalNetwork)
+	stakedTokenAmount, err := promptStakeAmount(subnetName, true, models.NewLocalNetwork())
 	if err != nil {
 		return err
 	}
@@ -632,7 +632,7 @@ func handleRemoveAndAddValidators(sc models.Sidecar, subnetID ids.ID, validator 
 		return err
 	}
 	ux.Logger.PrintToUser(fmt.Sprintf("%s successfully joined elastic subnet as permissionless validator!", validator.String()))
-	if err = app.UpdateSidecarPermissionlessValidator(&sc, models.LocalNetwork, validator.String(), txID); err != nil {
+	if err = app.UpdateSidecarPermissionlessValidator(&sc, models.NewLocalNetwork(), validator.String(), txID); err != nil {
 		return fmt.Errorf("joining permissionless subnet was successful, but failed to update sidecar: %w", err)
 	}
 	return nil
