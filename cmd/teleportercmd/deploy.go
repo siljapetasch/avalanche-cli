@@ -19,7 +19,7 @@ type DeployCmdFlags struct {
 }
 
 var (
-	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
+	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
 	deployCmdflags                DeployCmdFlags
 )
 
@@ -47,7 +47,7 @@ func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags)
 		deployCmdflags.Network,
 		true,
 		deploySupportedNetworkOptions,
-		"",
+		subnetName,
 	)
 	if err != nil {
 		return err

@@ -93,31 +93,6 @@ func AddNetworkFlagsToCmd(cmd *cobra.Command, networkFlags *NetworkFlags, always
 	}
 }
 
-func NetworkFromName(networkName string) (models.Network, error) {
-	switch {
-	case strings.HasPrefix(networkName, models.Mainnet.String()):
-		return models.NewMainnetNetwork(), nil
-	case strings.HasPrefix(networkName, models.Fuji.String()):
-		return models.NewFujiNetwork(), nil
-	case strings.HasPrefix(networkName, models.Local.String()):
-		return models.NewLocalNetwork(), nil
-	case strings.HasPrefix(networkName, models.Devnet.String()):
-		parts := strings.Split(networkName, " ")
-		if len(parts) != 2 {
-			return models.UndefinedNetwork, fmt.Errorf("expected 'Devnet Endpoint' on network name %s", networkName)
-		}
-		return models.NewLocalNetwork(), nil
-	case strings.HasPrefix(networkName, "Cluster"):
-		parts := strings.Split(networkName, " ")
-		if len(parts) != 2 {
-			return models.UndefinedNetwork, fmt.Errorf("expected 'Cluster clusterName' on network name %s", networkName)
-		}
-		clusterName := parts[1]
-		return app.GetClusterNetwork(clusterName)
-	}
-	return models.UndefinedNetwork, fmt.Errorf("invalid network name %q", networkName)
-}
-
 func GetNetworkFromCmdLineFlags(
 	networkFlags NetworkFlags,
 	requireDevnetEndpointSpecification bool,
