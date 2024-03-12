@@ -162,7 +162,7 @@ func wiz(cmd *cobra.Command, args []string) error {
 	}
 
 	if !clusterAlreadyExists {
-		createDevnet = true
+		createNetworkCmdFlags.UseDevnet = true
 		useAvalanchegoVersionFromSubnet = subnetName
 		ux.Logger.PrintToUser("")
 		ux.Logger.PrintToUser(logging.Green.Wrap("Creating the devnet..."))
@@ -256,8 +256,10 @@ func wiz(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		flags := teleportercmd.DeployCmdFlags{
-			UseDevnet: true,
-			Endpoint:  clustersConfig.Clusters[clusterName].Network.Endpoint,
+			Network: subnetcmd.NetworkFlags{
+				UseDevnet: true,
+				Endpoint:  clustersConfig.Clusters[clusterName].Network.Endpoint,
+			},
 		}
 		if err := teleportercmd.DeployWithLocalFlags(nil, []string{subnetName}, flags); err != nil {
 			return err

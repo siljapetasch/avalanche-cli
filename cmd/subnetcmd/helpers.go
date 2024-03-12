@@ -10,8 +10,8 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanchego/api/info"
-	"golang.org/x/exp/slices"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/slices"
 )
 
 type NetworkOption int64
@@ -58,11 +58,11 @@ func networkOptionFromString(s string) NetworkOption {
 }
 
 type NetworkFlags struct {
-	UseLocal   bool
-	UseDevnet  bool
-	UseFuji    bool
-	UseMainnet bool
-	Endpoint   string
+	UseLocal    bool
+	UseDevnet   bool
+	UseFuji     bool
+	UseMainnet  bool
+	Endpoint    string
 	ClusterName string
 }
 

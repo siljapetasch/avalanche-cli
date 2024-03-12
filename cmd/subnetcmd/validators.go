@@ -53,33 +53,32 @@ func printValidators(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-
 	/*
-	if !flags.EnsureMutuallyExclusive([]bool{validatorsLocal, validatorsTestnet, validatorsMainnet}) {
-		return errMutuallyExlusiveNetworks
-	}
-
-	network := models.UndefinedNetwork
-	switch {
-	case validatorsLocal:
-		network = models.LocalNetwork
-	case validatorsTestnet:
-		network = models.FujiNetwork
-	case validatorsMainnet:
-		network = models.MainnetNetwork
-	}
-
-	if network.Kind == models.Undefined {
-		// no flag was set, prompt user
-		networkStr, err := app.Prompt.CaptureList(
-			"Choose a network to list validators from",
-			[]string{models.Local.String(), models.Fuji.String(), models.Mainnet.String()},
-		)
-		if err != nil {
-			return err
+		if !flags.EnsureMutuallyExclusive([]bool{validatorsLocal, validatorsTestnet, validatorsMainnet}) {
+			return errMutuallyExlusiveNetworks
 		}
-		network = models.NetworkFromString(networkStr)
-	}
+
+		network := models.UndefinedNetwork
+		switch {
+		case validatorsLocal:
+			network = models.LocalNetwork
+		case validatorsTestnet:
+			network = models.FujiNetwork
+		case validatorsMainnet:
+			network = models.MainnetNetwork
+		}
+
+		if network.Kind == models.Undefined {
+			// no flag was set, prompt user
+			networkStr, err := app.Prompt.CaptureList(
+				"Choose a network to list validators from",
+				[]string{models.Local.String(), models.Fuji.String(), models.Mainnet.String()},
+			)
+			if err != nil {
+				return err
+			}
+			network = models.NetworkFromString(networkStr)
+		}
 	*/
 
 	// get the subnetID

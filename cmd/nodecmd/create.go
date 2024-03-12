@@ -40,9 +40,8 @@ import (
 )
 
 var (
-	createOnFuji                          bool
-	createDevnet                          bool
-	createOnMainnet                       bool
+	createSupportedNetworkOptions         = []subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Devnet}
+	createNetworkCmdFlags                 subnetcmd.NetworkFlags
 	useAWS                                bool
 	useGCP                                bool
 	cmdLineRegion                         []string
@@ -89,6 +88,7 @@ will apply to all nodes in the cluster`,
 		Args:         cobra.ExactArgs(1),
 		RunE:         createNodes,
 	}
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &createNetworkCmdFlags, false, createSupportedNetworkOptions)
 	cmd.Flags().BoolVar(&useStaticIP, "use-static-ip", true, "attach static Public IP on cloud servers")
 	cmd.Flags().BoolVar(&useAWS, "aws", false, "create node/s in AWS cloud")
 	cmd.Flags().BoolVar(&useGCP, "gcp", false, "create node/s in GCP cloud")
@@ -104,8 +104,6 @@ will apply to all nodes in the cluster`,
 	cmd.Flags().StringVar(&cmdLineGCPProjectName, "gcp-project", "", "use given GCP project")
 	cmd.Flags().StringVar(&cmdLineAlternativeKeyPairName, "alternative-key-pair-name", "", "key pair name to use if default one generates conflicts")
 	cmd.Flags().StringVar(&awsProfile, "aws-profile", constants.AWSDefaultCredential, "aws profile to use")
-	cmd.Flags().BoolVar(&createOnFuji, "fuji", false, "create node/s in Fuji Network")
-	cmd.Flags().BoolVar(&createDevnet, "devnet", false, "create node/s into a new Devnet")
 	cmd.Flags().BoolVar(&useSSHAgent, "use-ssh-agent", false, "use ssh agent(ex: Yubikey) for ssh auth")
 	cmd.Flags().StringVar(&sshIdentity, "ssh-agent-identity", "", "use given ssh identity(only for ssh agent). If not set, default will be used")
 	cmd.Flags().BoolVar(&sameMonitoringInstance, "same-monitoring-instance", false, "host monitoring for a cloud servers on the same instance")
@@ -141,7 +139,7 @@ func preCreateChecks() error {
 	if useSSHAgent && !utils.IsSSHAgentAvailable() {
 		return fmt.Errorf("ssh agent is not available")
 	}
-	if devnetNumAPINodes > 0 && !createDevnet {
+	if devnetNumAPINodes > 0 && !createNetworkCmdFlags.UseDevnet {
 		return fmt.Errorf("api nodes can only be created in devnet")
 	}
 	return nil
@@ -153,14 +151,9 @@ func createNodes(_ *cobra.Command, args []string) error {
 	}
 	clusterName := args[0]
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+		createNetworkCmdFlags,
 		false,
-		createDevnet,
-		createOnFuji,
-		createOnMainnet,
-		"",
-		false,
-		"",
-		[]subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Devnet},
+		createSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {
@@ -187,7 +180,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("set to use GCP project but cloud option is not GCP")
 	}
 	// for devnet add nonstake api nodes for each region with stake
-	if createDevnet {
+	if createNetworkCmdFlags.UseDevnet {
 		numNodes = utils.Map(numNodes, func(n int) int {
 			return n + devnetNumAPINodes
 		})
@@ -1257,7 +1250,7 @@ func getRegionsNodeNum(cloudName string) (
 		if err != nil {
 			return nil, err
 		}
-		if createDevnet {
+		if createNetworkCmdFlags.UseDevnet {
 			numNodes += uint32(devnetNumAPINodes)
 		}
 		if numNodes > uint32(math.MaxInt32) {

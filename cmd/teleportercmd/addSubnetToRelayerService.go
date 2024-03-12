@@ -16,7 +16,7 @@ type AddSubnetToRelayerServiceCmdFlags struct {
 
 var (
 	addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
-	addSubnetToRelayerServiceCmdFlags AddSubnetToRelayerServiceCmdFlags
+	addSubnetToRelayerServiceCmdFlags                AddSubnetToRelayerServiceCmdFlags
 )
 
 // avalanche teleporter relayer addSubnetToService

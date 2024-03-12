@@ -39,13 +39,13 @@ const (
 
 var (
 	elasticSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
-	transformLocal      bool
-	tokenNameFlag       string
-	tokenSymbolFlag     string
-	useDefaultConfig    bool
-	overrideWarning     bool
-	transformValidators bool
-	denominationFlag    int
+	transformLocal                 bool
+	tokenNameFlag                  string
+	tokenSymbolFlag                string
+	useDefaultConfig               bool
+	overrideWarning                bool
+	transformValidators            bool
+	denominationFlag               int
 )
 
 // avalanche subnet elastic

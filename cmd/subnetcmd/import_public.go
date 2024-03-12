@@ -23,9 +23,9 @@ import (
 
 var (
 	importPublicSupportedNetworkOptions = []NetworkOption{Fuji, Mainnet}
-	genesisFilePath string
-	blockchainIDstr string
-	nodeURL         string
+	genesisFilePath                     string
+	blockchainIDstr                     string
+	nodeURL                             string
 )
 
 // avalanche subnet import public
@@ -49,10 +49,9 @@ flag.`,
 
 	cmd.Flags().BoolVar(&useSubnetEvm, "evm", false, "import a subnet-evm")
 	cmd.Flags().BoolVar(&useCustom, "custom", false, "use a custom VM template")
-	cmd.Flags().BoolVarP(
+	cmd.Flags().BoolVar(
 		&overwriteImport,
 		"force",
-		"f",
 		false,
 		"overwrite the existing configuration if one exists",
 	)

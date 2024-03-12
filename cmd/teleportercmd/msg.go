@@ -30,7 +30,7 @@ type MsgCmdFlags struct {
 
 var (
 	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-	msgCmdFlags MsgCmdFlags
+	msgCmdFlags                MsgCmdFlags
 )
 
 // avalanche teleporter msg

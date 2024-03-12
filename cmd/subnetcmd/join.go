@@ -33,9 +33,9 @@ import (
 const ewoqPChainAddr = "P-custom18jma8ppw3nhx5r4ap8clazz0dps7rv5u9xde7p"
 
 var (
-	joinAllSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet, Devnet}
+	joinAllSupportedNetworkOptions        = []NetworkOption{Local, Fuji, Mainnet, Devnet}
 	joinNonElasticSupportedNetworkOptions = []NetworkOption{Fuji, Mainnet, Devnet}
-	joinElasticSupportedNetworkOptions = []NetworkOption{Local, Fuji}
+	joinElasticSupportedNetworkOptions    = []NetworkOption{Local, Fuji}
 
 	// path to avalanchego config file
 	avagoConfigPath string

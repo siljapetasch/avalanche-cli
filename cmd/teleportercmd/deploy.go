@@ -20,7 +20,7 @@ type DeployCmdFlags struct {
 
 var (
 	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-	deployCmdflags DeployCmdFlags
+	deployCmdflags                DeployCmdFlags
 )
 
 // avalanche teleporter deploy
