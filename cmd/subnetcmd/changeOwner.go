@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var changeOwnerSupportedNetworkOptions = []NetworkOption{Local, Devnet, Fuji, Mainnet}
+
 // avalanche subnet changeOwner
 func newChangeOwnerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,16 +30,11 @@ This command currently only works on Subnets deployed to Devnet, Fuji or Mainnet
 		RunE:         changeOwner,
 		Args:         cobra.ExactArgs(1),
 	}
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, changeOwnerSupportedNetworkOptions)
 	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji/devnet)")
 	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji/devnet]")
 	cmd.Flags().BoolVarP(&useEwoq, "ewoq", "e", false, "use ewoq key [fuji/devnet]")
-	cmd.Flags().StringVar(&endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVar(&deployLocal, "local", false, "change subnet owner on `local`")
-	cmd.Flags().BoolVar(&deployDevnet, "devnet", false, "change subnet owner on `devnet`")
-	cmd.Flags().BoolVar(&deployTestnet, "fuji", false, "change subnet owner on `fuji` (alias for `testnet`)")
-	cmd.Flags().BoolVar(&deployTestnet, "testnet", false, "change subnet owner on `testnet` (alias for `fuji`)")
-	cmd.Flags().BoolVar(&deployMainnet, "mainnet", false, "change subnet owner on `mainnet`")
 	cmd.Flags().StringSliceVar(&subnetAuthKeys, "subnet-auth-keys", nil, "control keys that will be used to authenticate transfer subnet ownership tx")
 	cmd.Flags().BoolVarP(&sameControlKey, "same-control-key", "s", false, "use the fee-paying key as control key")
 	cmd.Flags().StringSliceVar(&controlKeys, "control-keys", nil, "addresses that may make subnet changes")
@@ -50,14 +47,9 @@ func changeOwner(_ *cobra.Command, args []string) error {
 	subnetName := args[0]
 
 	network, err := GetNetworkFromCmdLineFlags(
-		deployLocal,
-		deployDevnet,
-		deployTestnet,
-		deployMainnet,
-		endpoint,
+		globalNetworkFlags,
 		true,
-		"",
-		[]NetworkOption{Local, Devnet, Fuji, Mainnet},
+		changeOwnerSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

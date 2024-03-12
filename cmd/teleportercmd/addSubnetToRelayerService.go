@@ -11,14 +11,13 @@ import (
 )
 
 type AddSubnetToRelayerServiceCmdFlags struct {
-	Endpoint   string
-	UseLocal   bool
-	UseDevnet  bool
-	UseFuji    bool
-	UseMainnet bool
+	Network subnetcmd.NetworkFlags
 }
 
-var addSubnetToRelayerServiceCmdFlags AddSubnetToRelayerServiceCmdFlags
+var (
+	addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
+	addSubnetToRelayerServiceCmdFlags AddSubnetToRelayerServiceCmdFlags
+)
 
 // avalanche teleporter relayer addSubnetToService
 func newAddSubnetToRelayerServiceCmd() *cobra.Command {
@@ -30,12 +29,7 @@ func newAddSubnetToRelayerServiceCmd() *cobra.Command {
 		RunE:         addSubnetToRelayerService,
 		Args:         cobra.ExactArgs(1),
 	}
-	cmd.Flags().StringVar(&addSubnetToRelayerServiceCmdFlags.Endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVar(&addSubnetToRelayerServiceCmdFlags.UseDevnet, "devnet", false, "operate on a devnet network")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&addSubnetToRelayerServiceCmdFlags.UseMainnet, "mainnet", "m", false, "operate on mainnet")
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &addSubnetToRelayerServiceCmdFlags.Network, true, addSubnetToRelayerServiceSupportedNetworkOptions)
 	return cmd
 }
 
@@ -45,14 +39,9 @@ func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
 
 func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, flags AddSubnetToRelayerServiceCmdFlags) error {
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags.UseLocal,
-		flags.UseDevnet,
-		flags.UseFuji,
-		flags.UseMainnet,
-		flags.Endpoint,
-		false,
-		"",
-		[]subnetcmd.NetworkOption{subnetcmd.Local},
+		addSubnetToRelayerServiceCmdFlags.Network,
+		true,
+		addSubnetToRelayerServiceSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

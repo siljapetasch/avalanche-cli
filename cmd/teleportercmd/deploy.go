@@ -15,14 +15,13 @@ import (
 )
 
 type DeployCmdFlags struct {
-	Endpoint   string
-	UseLocal   bool
-	UseDevnet  bool
-	UseFuji    bool
-	UseMainnet bool
+	Network subnetcmd.NetworkFlags
 }
 
-var deployCmdflags DeployCmdFlags
+var (
+	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
+	deployCmdflags DeployCmdFlags
+)
 
 // avalanche teleporter deploy
 func newDeployCmd() *cobra.Command {
@@ -34,12 +33,7 @@ func newDeployCmd() *cobra.Command {
 		RunE:         deploy,
 		Args:         cobra.ExactArgs(1),
 	}
-	cmd.Flags().StringVar(&deployCmdflags.Endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&deployCmdflags.UseLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVar(&deployCmdflags.UseDevnet, "devnet", false, "operate on a devnet network")
-	cmd.Flags().BoolVarP(&deployCmdflags.UseFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&deployCmdflags.UseFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&deployCmdflags.UseMainnet, "mainnet", "m", false, "operate on mainnet")
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &deployCmdflags.Network, true, deploySupportedNetworkOptions)
 	return cmd
 }
 
@@ -49,23 +43,10 @@ func deploy(_ *cobra.Command, args []string) error {
 
 func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags) error {
 	subnetName := args[0]
-	// fix endpoint if available
-	if flags.UseDevnet && flags.Endpoint == "" {
-		var err error
-		flags.Endpoint, err = getDevnetEndpoint(subnetName)
-		if err != nil {
-			return err
-		}
-	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags.UseLocal,
-		flags.UseDevnet,
-		flags.UseFuji,
-		flags.UseMainnet,
-		flags.Endpoint,
+		deployCmdflags.Network,
 		true,
-		"",
-		[]subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet},
+		deploySupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

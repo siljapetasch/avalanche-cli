@@ -165,7 +165,7 @@ func GetNetworkFromCmdLineFlags(
 		networkOption = networkOptionFromString(networkOptionStr)
 		switch networkOption {
 		case Cluster:
-			clusterName, err = app.Prompt.CaptureList(
+			networkFlags.ClusterName, err = app.Prompt.CaptureList(
 				"Choose a cluster",
 				clusterNames,
 			)
@@ -175,8 +175,8 @@ func GetNetworkFromCmdLineFlags(
 		}
 	}
 
-	if networkOption == Devnet && endpoint == "" && requireDevnetEndpointSpecification {
-		endpoint, err = app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", networkOption.String()), false)
+	if networkOption == Devnet && networkFlags.Endpoint == "" && requireDevnetEndpointSpecification {
+		networkFlags.Endpoint, err = app.Prompt.CaptureURL(fmt.Sprintf("%s Network Endpoint", networkOption.String()), false)
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
@@ -188,8 +188,8 @@ func GetNetworkFromCmdLineFlags(
 		network = models.NewLocalNetwork()
 	case Devnet:
 		networkID := uint32(0)
-		if endpoint != "" {
-			infoClient := info.NewClient(endpoint)
+		if networkFlags.Endpoint != "" {
+			infoClient := info.NewClient(networkFlags.Endpoint)
 			ctx, cancel := utils.GetAPIContext()
 			defer cancel()
 			networkID, err = infoClient.GetNetworkID(ctx)
@@ -197,21 +197,57 @@ func GetNetworkFromCmdLineFlags(
 				return models.UndefinedNetwork, err
 			}
 		}
-		network = models.NewDevnetNetwork(endpoint, networkID)
+		network = models.NewDevnetNetwork(networkFlags.Endpoint, networkID)
 	case Fuji:
 		network = models.NewFujiNetwork()
 	case Mainnet:
 		network = models.NewMainnetNetwork()
 	case Cluster:
-		network, err = app.GetClusterNetwork(clusterName)
+		network, err = app.GetClusterNetwork(networkFlags.ClusterName)
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
 	}
 	// on all cases, enable user setting specific endpoint
-	if endpoint != "" {
-		network.Endpoint = endpoint
+	if networkFlags.Endpoint != "" {
+		network.Endpoint = networkFlags.Endpoint
 	}
 
 	return network, nil
+}
+
+func CreateSubnetFirst(cmd *cobra.Command, args []string, subnetName string, skipPrompt bool) error {
+	if !app.SubnetConfigExists(subnetName) {
+		if !skipPrompt {
+			yes, err := app.Prompt.CaptureNoYes(fmt.Sprintf("Subnet %s is not created yet. Do you want to create it first?", subnetName))
+			if err != nil {
+				return err
+			}
+			if !yes {
+				return fmt.Errorf("subnet not available and not being created first")
+			}
+		}
+		return createSubnetConfig(cmd, args)
+	}
+	return nil
+}
+
+func DeploySubnetFirst(cmd *cobra.Command, args []string, subnetName string, skipPrompt bool) error {
+	sc, err := app.LoadSidecar(subnetName)
+	if err != nil {
+		return err
+	}
+	if len(sc.Networks) == 0 {
+		if !skipPrompt {
+			yes, err := app.Prompt.CaptureNoYes(fmt.Sprintf("Subnet %s is not deployed yet. Do you want to deploy it first?", subnetName))
+			if err != nil {
+				return err
+			}
+			if !yes {
+				return fmt.Errorf("subnet not deployed and not being deployed first")
+			}
+		}
+		return runDeploy(cmd, args)
+	}
+	return nil
 }

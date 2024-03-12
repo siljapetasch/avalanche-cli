@@ -33,13 +33,9 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+var deploySupportedNetworkOptions = []NetworkOption{Local, Cluster, Fuji, Mainnet, Devnet}
+
 var (
-	deployLocal              bool
-	deployDevnet             bool
-	deployTestnet            bool
-	deployMainnet            bool
-	endpoint                 string
-	clusterName              string
 	sameControlKey           bool
 	keyName                  string
 	threshold                uint32
@@ -82,13 +78,7 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 		PersistentPostRun: handlePostRun,
 		Args:              cobra.ExactArgs(1),
 	}
-	cmd.Flags().StringVar(&clusterName, "cluster", "", "deploy to the given cluster")
-	cmd.Flags().StringVar(&endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&deployLocal, "local", "l", false, "deploy to a local network")
-	cmd.Flags().BoolVar(&deployDevnet, "devnet", false, "deploy to a devnet network")
-	cmd.Flags().BoolVarP(&deployTestnet, "testnet", "t", false, "deploy to testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&deployTestnet, "fuji", "f", false, "deploy to fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&deployMainnet, "mainnet", "m", false, "deploy to mainnet")
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
 	cmd.Flags().StringVar(&userProvidedAvagoVersion, "avalanchego-version", "latest", "use this version of avalanchego (ex: v1.17.12)")
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji/devnet deploy only]")
 	cmd.Flags().BoolVarP(&sameControlKey, "same-control-key", "s", false, "use the fee-paying key as control key")
@@ -109,21 +99,13 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 func CallDeploy(
 	cmd *cobra.Command,
 	subnetName string,
-	deployLocalParam bool,
-	deployDevnetParam bool,
-	deployTestnetParam bool,
-	deployMainnetParam bool,
-	endpointParam string,
+	networkFlags NetworkFlags,
 	keyNameParam string,
 	useLedgerParam bool,
 	useEwoqParam bool,
 	sameControlKeyParam bool,
 ) error {
-	deployLocal = deployLocalParam
-	deployTestnet = deployTestnetParam
-	deployMainnet = deployMainnetParam
-	deployDevnet = deployDevnetParam
-	endpoint = endpointParam
+	globalNetworkFlags = networkFlags
 	sameControlKey = sameControlKeyParam
 	keyName = keyNameParam
 	useLedger = useLedgerParam
@@ -265,29 +247,14 @@ func getSubnetEVMMainnetChainID(sc *models.Sidecar, subnetName string) error {
 
 // deploySubnet is the cobra command run for deploying subnets
 func deploySubnet(cmd *cobra.Command, args []string) error {
+	subnetName := args[0]
+	if err := CreateSubnetFirst(cmd, args, subnetName, skipCreatePrompt); err != nil {
+		return err
+	}
+
 	chains, err := ValidateSubnetNameAndGetChains(args)
 	if err != nil {
-		if !strings.Contains(err.Error(), "Invalid subnet") {
-			return err
-		}
-		if !skipCreatePrompt {
-			yes, promptErr := app.Prompt.CaptureNoYes(fmt.Sprintf("Subnet %s is not found. Do you want to create it first?", args[0]))
-			if promptErr != nil {
-				return promptErr
-			}
-			if !yes {
-				return err
-			}
-		}
-		createErr := createSubnetConfig(cmd, args)
-		if createErr != nil {
-			return createErr
-		}
-		chains, err = ValidateSubnetNameAndGetChains(args)
-		if err != nil {
-			return err
-		}
-		ux.Logger.PrintToUser("Now deploying subnet %s", chains[0])
+		return err
 	}
 
 	chain := chains[0]
@@ -308,14 +275,9 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 	}
 
 	network, err := GetNetworkFromCmdLineFlags(
-		deployLocal,
-		deployDevnet,
-		deployTestnet,
-		deployMainnet,
-		endpoint,
+		globalNetworkFlags,
 		true,
-		clusterName,
-		[]NetworkOption{Local, Cluster, Fuji, Mainnet, Devnet},
+		deploySupportedNetworkOptions,
 		"",
 	)
 	if err != nil {
@@ -830,7 +792,6 @@ func CheckForInvalidDeployAndGetAvagoVersion(network localnetworkinterface.Statu
 	if err != nil {
 		return "", err
 	}
-
 	desiredAvagoVersion := userProvidedAvagoVersion
 
 	// RPC Version was made available in the info API in avalanchego version v1.9.2. For prior versions,

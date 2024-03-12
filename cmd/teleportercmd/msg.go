@@ -25,14 +25,13 @@ import (
 )
 
 type MsgCmdFlags struct {
-	Endpoint   string
-	UseLocal   bool
-	UseDevnet  bool
-	UseFuji    bool
-	UseMainnet bool
+	Network subnetcmd.NetworkFlags
 }
 
-var msgCmdFlags MsgCmdFlags
+var (
+	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
+	msgCmdFlags MsgCmdFlags
+)
 
 // avalanche teleporter msg
 func newMsgCmd() *cobra.Command {
@@ -44,12 +43,7 @@ func newMsgCmd() *cobra.Command {
 		RunE:         msg,
 		Args:         cobra.ExactArgs(3),
 	}
-	cmd.Flags().StringVar(&msgCmdFlags.Endpoint, "endpoint", "", "use the given endpoint for network operations")
-	cmd.Flags().BoolVarP(&msgCmdFlags.UseLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVar(&msgCmdFlags.UseDevnet, "devnet", false, "operate on a devnet network")
-	cmd.Flags().BoolVarP(&msgCmdFlags.UseFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&msgCmdFlags.UseFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&msgCmdFlags.UseMainnet, "mainnet", "m", false, "operate on mainnet")
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &msgCmdFlags.Network, true, msgSupportedNetworkOptions)
 	return cmd
 }
 
@@ -62,29 +56,10 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 	destSubnetName := args[1]
 	message := args[2]
 
-	// fix endpoint if available
-	if flags.UseDevnet && flags.Endpoint == "" {
-		var err error
-		flags.Endpoint, err = getDevnetEndpoint(sourceSubnetName)
-		if err != nil {
-			return err
-		}
-		if flags.Endpoint == "" {
-			flags.Endpoint, err = getDevnetEndpoint(destSubnetName)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags.UseLocal,
-		flags.UseDevnet,
-		flags.UseFuji,
-		flags.UseMainnet,
-		flags.Endpoint,
+		msgCmdFlags.Network,
 		true,
-		"",
-		[]subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet},
+		msgSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

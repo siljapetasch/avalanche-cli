@@ -21,9 +21,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var supportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+var addPermissionlessDelegatorSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
 
-// avalanche subnet deploy
+// avalanche subnet addPermissionlessDelegator
 func newAddPermissionlessDelegatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "addPermissionlessDelegator [subnetName]",
@@ -49,7 +49,7 @@ these prompts by providing the values with flags.`,
 		Args:         cobra.ExactArgs(1),
 	}
 
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, supportedNetworkOptions)
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, addPermissionlessDelegatorSupportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji deploy only]")
 	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji)")
 	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
@@ -75,7 +75,7 @@ func addPermissionlessDelegator(_ *cobra.Command, args []string) error {
 	network, err := GetNetworkFromCmdLineFlags(
 		globalNetworkFlags,
 		true,
-		supportedNetworkOptions,
+		addPermissionlessDelegatorSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

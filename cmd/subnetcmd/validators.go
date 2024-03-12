@@ -24,6 +24,8 @@ var (
 	validatorsMainnet bool
 )
 
+var validatorsSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+
 // avalanche subnet validators
 func newValidatorsCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -35,24 +37,16 @@ severarl statistics about them.`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 	}
-	cmd.Flags().BoolVarP(&validatorsLocal, "local", "l", false, "operate on a local network")
-	cmd.Flags().BoolVarP(&validatorsTestnet, "testnet", "t", false, "operate on a testnet (alias to `fuji`)")
-	cmd.Flags().BoolVarP(&validatorsTestnet, "fuji", "f", false, "deploy to fuji (alias to `testnet`")
-	cmd.Flags().BoolVarP(&validatorsMainnet, "mainnet", "m", false, "deploy to mainnet")
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, validatorsSupportedNetworkOptions)
 	return cmd
 }
 
 func printValidators(_ *cobra.Command, args []string) error {
 
 	network, err := GetNetworkFromCmdLineFlags(
-		deployLocal,
-		deployDevnet,
-		deployTestnet,
-		deployMainnet,
-		endpoint,
-		true,
-		clusterName,
-		[]NetworkOption{Local, Cluster, Fuji, Mainnet},
+		globalNetworkFlags,
+		false,
+		validatorsSupportedNetworkOptions,
 		"",
 	)
 	if err != nil {

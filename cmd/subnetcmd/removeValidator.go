@@ -20,7 +20,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// avalanche subnet deploy
+var removeValidatorSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+
+// avalanche subnet removeValidator
 func newRemoveValidatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "removeValidator [subnetName]",
@@ -34,12 +36,9 @@ these prompts by providing the values with flags.`,
 		RunE:         removeValidator,
 		Args:         cobra.ExactArgs(1),
 	}
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, removeValidatorSupportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji deploy only]")
 	cmd.Flags().StringVar(&nodeIDStr, "nodeID", "", "set the NodeID of the validator to remove")
-	cmd.Flags().BoolVar(&deployLocal, "local", false, "remove from the locally deployed Subnet")
-	cmd.Flags().BoolVar(&deployTestnet, "fuji", false, "remove from `fuji` deployment (alias for `testnet`)")
-	cmd.Flags().BoolVar(&deployTestnet, "testnet", false, "remove from `testnet` deployment (alias for `fuji`)")
-	cmd.Flags().BoolVar(&deployMainnet, "mainnet", false, "remove from `mainnet` deployment")
 	cmd.Flags().StringSliceVar(&subnetAuthKeys, "subnet-auth-keys", nil, "control keys that will be used to authenticate the removeValidator tx")
 	cmd.Flags().StringVar(&outputTxPath, "output-tx-path", "", "file path of the removeValidator tx")
 	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji)")
@@ -53,25 +52,14 @@ func removeValidator(_ *cobra.Command, args []string) error {
 		err    error
 	)
 
-	network := models.UndefinedNetwork
-	switch {
-	case deployTestnet:
-		network = models.FujiNetwork
-	case deployMainnet:
-		network = models.MainnetNetwork
-	case deployLocal:
-		network = models.LocalNetwork
-	}
-
-	if network.Kind == models.Undefined {
-		networkStr, err := app.Prompt.CaptureList(
-			"Choose a network to remove a validator from",
-			[]string{models.Local.String(), models.Fuji.String(), models.Mainnet.String()},
-		)
-		if err != nil {
-			return err
-		}
-		network = models.NetworkFromString(networkStr)
+	network, err := GetNetworkFromCmdLineFlags(
+		globalNetworkFlags,
+		false,
+		removeValidatorSupportedNetworkOptions,
+		"",
+	)
+	if err != nil {
+		return err
 	}
 
 	if outputTxPath != "" {
