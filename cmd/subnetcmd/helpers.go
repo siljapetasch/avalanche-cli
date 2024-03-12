@@ -11,6 +11,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanchego/api/info"
 	"golang.org/x/exp/slices"
+	"github.com/spf13/cobra"
 )
 
 type NetworkOption int64
@@ -56,46 +57,90 @@ func networkOptionFromString(s string) NetworkOption {
 	return Undefined
 }
 
+type NetworkFlags struct {
+	UseLocal   bool
+	UseDevnet  bool
+	UseFuji    bool
+	UseMainnet bool
+	Endpoint   string
+	ClusterName string
+}
+
+var (
+	globalNetworkFlags NetworkFlags
+)
+
+func AddNetworkFlagsToCmd(cmd *cobra.Command, networkFlags *NetworkFlags, alwaysAddEndpoint bool, supportedNetworkOptions []NetworkOption) {
+	addEndpoint := alwaysAddEndpoint
+	for _, networkOption := range supportedNetworkOptions {
+		switch networkOption {
+		case Local:
+			cmd.Flags().BoolVarP(&networkFlags.UseLocal, "local", "l", false, "opeate on a local network")
+		case Devnet:
+			cmd.Flags().BoolVar(&networkFlags.UseDevnet, "devnet", false, "operate on a devnet network")
+			addEndpoint = true
+		case Fuji:
+			cmd.Flags().BoolVarP(&networkFlags.UseFuji, "testnet", "t", false, "operate on testnet (alias to `fuji`)")
+			cmd.Flags().BoolVarP(&networkFlags.UseFuji, "fuji", "f", false, "operate on fuji (alias to `testnet`")
+		case Mainnet:
+			cmd.Flags().BoolVarP(&networkFlags.UseMainnet, "mainnet", "m", false, "operate on mainnet")
+		case Cluster:
+			cmd.Flags().StringVar(&networkFlags.ClusterName, "cluster", "", "operate on the given cluster")
+		}
+	}
+	if addEndpoint {
+		cmd.Flags().StringVar(&networkFlags.Endpoint, "endpoint", "", "use the given endpoint for network operations")
+	}
+}
+
 func GetNetworkFromCmdLineFlags(
-	useLocal bool,
-	useDevnet bool,
-	useFuji bool,
-	useMainnet bool,
-	endpoint string,
+	networkFlags NetworkFlags,
 	requireDevnetEndpointSpecification bool,
-	clusterName string,
 	supportedNetworkOptions []NetworkOption,
+	subnetName string,
 ) (models.Network, error) {
+	if subnetName != "" {
+		// get supported networks from sidecar
+		sc, err := app.LoadSidecar(subnetName)
+		if err != nil {
+			return models.UndefinedNetwork, err
+		}
+		for networkName, _ := range sc.Networks {
+			fmt.Println(networkName)
+		}
+	}
+	return models.UndefinedNetwork, fmt.Errorf("PEPE")
+
 	var err error
 	// supported flags
-	networkFlags := map[NetworkOption]string{
+	networkFlagsMap := map[NetworkOption]string{
 		Local:   "--local",
 		Devnet:  "--devnet",
 		Fuji:    "--fuji/--testnet",
 		Mainnet: "--mainnet",
 		Cluster: "--cluster",
 	}
-	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return networkFlags[n] }), ", ")
+	supportedNetworksFlags := strings.Join(utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return networkFlagsMap[n] }), ", ")
 	// received option
 	networkOption := Undefined
 	switch {
-	case useLocal:
+	case networkFlags.UseLocal:
 		networkOption = Local
-	case useDevnet:
+	case networkFlags.UseDevnet:
 		networkOption = Devnet
-	case useFuji:
+	case networkFlags.UseFuji:
 		networkOption = Fuji
-	case useMainnet:
+	case networkFlags.UseMainnet:
 		networkOption = Mainnet
-	case clusterName != "":
+	case networkFlags.ClusterName != "":
 		networkOption = Cluster
 	}
 	// unsupported option
 	if networkOption != Undefined && !slices.Contains(supportedNetworkOptions, networkOption) {
-		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlags[networkOption], supportedNetworksFlags)
+		return models.UndefinedNetwork, fmt.Errorf("network flag %s is not supported. use one of %s", networkFlagsMap[networkOption], supportedNetworksFlags)
 	}
 	// mutual exclusion
-	if !flags.EnsureMutuallyExclusive([]bool{useLocal, useDevnet, useFuji, useMainnet, clusterName != ""}) {
+	if !flags.EnsureMutuallyExclusive([]bool{networkFlags.UseLocal, networkFlags.UseDevnet, networkFlags.UseFuji, networkFlags.UseMainnet, networkFlags.ClusterName != ""}) {
 		return models.UndefinedNetwork, fmt.Errorf("network flags %s are mutually exclusive", supportedNetworksFlags)
 	}
 

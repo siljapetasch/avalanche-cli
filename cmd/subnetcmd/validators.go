@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/cmd/flags"
+	//"github.com/ava-labs/avalanche-cli/cmd/flags"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanchego/ids"
@@ -35,14 +35,32 @@ severarl statistics about them.`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 	}
-	cmd.Flags().BoolVarP(&validatorsLocal, "local", "l", false, "deploy to a local network")
-	cmd.Flags().BoolVarP(&validatorsTestnet, "testnet", "t", false, "deploy to testnet (alias to `fuji`)")
+	cmd.Flags().BoolVarP(&validatorsLocal, "local", "l", false, "operate on a local network")
+	cmd.Flags().BoolVarP(&validatorsTestnet, "testnet", "t", false, "operate on a testnet (alias to `fuji`)")
 	cmd.Flags().BoolVarP(&validatorsTestnet, "fuji", "f", false, "deploy to fuji (alias to `testnet`")
 	cmd.Flags().BoolVarP(&validatorsMainnet, "mainnet", "m", false, "deploy to mainnet")
 	return cmd
 }
 
 func printValidators(_ *cobra.Command, args []string) error {
+
+	network, err := GetNetworkFromCmdLineFlags(
+		deployLocal,
+		deployDevnet,
+		deployTestnet,
+		deployMainnet,
+		endpoint,
+		true,
+		clusterName,
+		[]NetworkOption{Local, Cluster, Fuji, Mainnet},
+		"",
+	)
+	if err != nil {
+		return err
+	}
+
+
+	/*
 	if !flags.EnsureMutuallyExclusive([]bool{validatorsLocal, validatorsTestnet, validatorsMainnet}) {
 		return errMutuallyExlusiveNetworks
 	}
@@ -68,6 +86,7 @@ func printValidators(_ *cobra.Command, args []string) error {
 		}
 		network = models.NetworkFromString(networkStr)
 	}
+	*/
 
 	// get the subnetID
 	sc, err := app.LoadSidecar(args[0])

@@ -161,6 +161,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 		false,
 		"",
 		[]subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Devnet},
+		"",
 	)
 	if err != nil {
 		return err

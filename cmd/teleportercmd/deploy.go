@@ -66,6 +66,7 @@ func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags)
 		true,
 		"",
 		[]subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet},
+		"",
 	)
 	if err != nil {
 		return err

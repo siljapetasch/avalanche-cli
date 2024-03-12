@@ -85,6 +85,7 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 		true,
 		"",
 		[]subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet},
+		"",
 	)
 	if err != nil {
 		return err

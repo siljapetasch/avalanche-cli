@@ -92,6 +92,7 @@ func addValidator(_ *cobra.Command, args []string) error {
 		true,
 		"",
 		[]NetworkOption{Local, Devnet, Fuji, Mainnet},
+		"",
 	)
 	if err != nil {
 		return err

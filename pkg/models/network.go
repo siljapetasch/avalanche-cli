@@ -44,7 +44,7 @@ type Network struct {
 }
 
 var (
-	UndefinedNetwork = NewNetwork(Undefined, 0, "")
+	UndefinedNetwork = Network{}
 	LocalNetwork     = NewNetwork(Local, constants.LocalNetworkID, constants.LocalAPIEndpoint)
 	DevnetNetwork    = NewNetwork(Devnet, constants.DevnetNetworkID, constants.DevnetAPIEndpoint)
 	FujiNetwork      = NewNetwork(Fuji, avagoconstants.FujiID, constants.FujiAPIEndpoint)
@@ -99,7 +99,7 @@ func NewMainnetNetwork() Network {
 func NetworkFromString(s string) Network {
 	switch s {
 	case Mainnet.String():
-		return MainnetNetwork
+		return NewMainnetNetwork()
 	case Fuji.String():
 		return FujiNetwork
 	case Local.String():
@@ -113,7 +113,7 @@ func NetworkFromString(s string) Network {
 func NetworkFromNetworkID(networkID uint32) Network {
 	switch networkID {
 	case avagoconstants.MainnetID:
-		return MainnetNetwork
+		return NewMainnetNetwork()
 	case avagoconstants.FujiID:
 		return FujiNetwork
 	case constants.LocalNetworkID:

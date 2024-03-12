@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var supportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+
 // avalanche subnet deploy
 func newAddPermissionlessDelegatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -46,17 +48,15 @@ these prompts by providing the values with flags.`,
 		RunE:         addPermissionlessDelegator,
 		Args:         cobra.ExactArgs(1),
 	}
+
+	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, supportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji deploy only]")
+	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji)")
+	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
 	cmd.Flags().StringVar(&nodeIDStr, "nodeID", "", "set the NodeID of the validator to delegate to")
-	cmd.Flags().BoolVar(&deployTestnet, "fuji", false, "join on `fuji` (alias for `testnet`)")
-	cmd.Flags().BoolVar(&deployTestnet, "testnet", false, "join on `testnet` (alias for `fuji`)")
-	cmd.Flags().BoolVar(&deployMainnet, "mainnet", false, "join on `mainnet`")
-	cmd.Flags().BoolVar(&deployLocal, "local", false, "join on `local`")
 	cmd.Flags().Uint64Var(&stakeAmount, "stake-amount", 0, "amount of tokens to stake")
 	cmd.Flags().StringVar(&startTimeStr, "start-time", "", "start time that delegator starts delegating")
 	cmd.Flags().DurationVar(&duration, "staking-period", 0, "how long delegator should delegate for after start time")
-	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji)")
-	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
 
 	return cmd
 }
@@ -73,14 +73,10 @@ func addPermissionlessDelegator(_ *cobra.Command, args []string) error {
 	}
 
 	network, err := GetNetworkFromCmdLineFlags(
-		deployLocal,
-		false,
-		deployTestnet,
-		deployMainnet,
-		"",
+		globalNetworkFlags,
 		true,
+		supportedNetworkOptions,
 		"",
-		[]NetworkOption{Local, Fuji, Mainnet},
 	)
 	if err != nil {
 		return err
