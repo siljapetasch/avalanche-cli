@@ -279,26 +279,33 @@ func wiz(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// TODO: made this to work if there is no monitoring node
 func deployClusterYAMLFile(clusterName, subnetName string) error {
 	var (
-		err           error
-		separateHosts []*models.Host
+		err          error
+		separateHost *models.Host
 	)
 	monitoringInventoryFile := app.GetMonitoringInventoryDir(clusterName)
 	if utils.FileExists(monitoringInventoryFile) {
-		separateHosts, err = ansible.GetInventoryFromAnsibleInventoryFile(app.GetMonitoringInventoryDir(clusterName))
+		separateHosts, err := ansible.GetInventoryFromAnsibleInventoryFile(app.GetMonitoringInventoryDir(clusterName))
 		if err != nil {
 			return err
 		}
+		if len(separateHosts) > 0 {
+			separateHost = separateHosts[0]
+		}
+	}
+	if separateHost == nil {
+		return nil
 	}
 	subnetID, chainID, err := getDeployedSubnetInfo(clusterName, subnetName)
 	if err != nil {
 		return err
 	}
-	if err := createClusterYAMLFile(clusterName, subnetID, chainID, separateHosts[0]); err != nil {
+	if err := createClusterYAMLFile(clusterName, subnetID, chainID, separateHost); err != nil {
 		return err
 	}
-	return ssh.RunSSHCopyYAMLFile(separateHosts[0], app.GetClusterYAMLFilePath(clusterName))
+	return ssh.RunSSHCopyYAMLFile(separateHost, app.GetClusterYAMLFilePath(clusterName))
 }
 
 func waitForHealthyCluster(
