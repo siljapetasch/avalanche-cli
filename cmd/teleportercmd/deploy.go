@@ -7,6 +7,7 @@ import (
 
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 	"github.com/ava-labs/avalanchego/ids"
@@ -14,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
+var deploySupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Cluster, networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Devnet}
 
 // avalanche teleporter deploy
 func newDeployCmd() *cobra.Command {
@@ -26,7 +27,7 @@ func newDeployCmd() *cobra.Command {
 		RunE:         deploy,
 		Args:         cobra.ExactArgs(1),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
 	return cmd
 }
 
@@ -34,8 +35,9 @@ func deploy(_ *cobra.Command, args []string) error {
 	return CallDeploy(args[0], globalNetworkFlags)
 }
 
-func CallDeploy(subnetName string, flags subnetcmd.NetworkFlags) error {
-	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+func CallDeploy(subnetName string, flags networkoptions.NetworkFlags) error {
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		flags,
 		true,
 		deploySupportedNetworkOptions,

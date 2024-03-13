@@ -13,6 +13,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/key"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanchego/ids"
 	ledger "github.com/ava-labs/avalanchego/utils/crypto/ledger"
@@ -36,8 +37,8 @@ const (
 )
 
 var (
-	globalNetworkFlags          subnetcmd.NetworkFlags
-	listSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
+	globalNetworkFlags          networkoptions.NetworkFlags
+	listSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Mainnet, networkoptions.Fuji, networkoptions.Local}
 	all                         bool
 	pchain                      bool
 	cchain                      bool
@@ -57,7 +58,7 @@ keys or for the ledger addresses associated to certain indices.`,
 		RunE:         listKeys,
 		SilenceUsage: true,
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, listSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, listSupportedNetworkOptions)
 	cmd.Flags().BoolVarP(
 		&all,
 		allFlag,
@@ -181,8 +182,9 @@ func listKeys(*cobra.Command, []string) error {
 		networks = append(networks, models.NewMainnetNetwork())
 	}
 	if len(networks) == 0 {
-		network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-			subnetcmd.NetworkFlags{},
+		network, err := networkoptions.GetNetworkFromCmdLineFlags(
+			app,
+			networkoptions.NetworkFlags{},
 			false,
 			listSupportedNetworkOptions,
 			"",

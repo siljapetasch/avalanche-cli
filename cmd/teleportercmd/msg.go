@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/evm"
 	"github.com/ava-labs/avalanche-cli/pkg/key"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/ava-labs/avalanchego/ids"
@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-	globalNetworkFlags         subnetcmd.NetworkFlags
+	msgSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Cluster, networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Devnet}
+	globalNetworkFlags         networkoptions.NetworkFlags
 )
 
 // avalanche teleporter msg
@@ -39,7 +39,7 @@ func newMsgCmd() *cobra.Command {
 		RunE:         msg,
 		Args:         cobra.ExactArgs(3),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, msgSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, msgSupportedNetworkOptions)
 	return cmd
 }
 
@@ -55,7 +55,8 @@ func msg(_ *cobra.Command, args []string) error {
 	if !isCChain(destSubnetName) {
 		subnetNameToGetNetworkFrom = destSubnetName
 	}
-	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		msgSupportedNetworkOptions,

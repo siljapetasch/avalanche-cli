@@ -3,14 +3,14 @@
 package teleportercmd
 
 import (
-	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/teleporter"
 
 	"github.com/spf13/cobra"
 )
 
-var addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
+var addSubnetToRelayerServiceSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Devnet, networkoptions.Fuji, networkoptions.Mainnet}
 
 // avalanche teleporter relayer addSubnetToService
 func newAddSubnetToRelayerServiceCmd() *cobra.Command {
@@ -22,12 +22,13 @@ func newAddSubnetToRelayerServiceCmd() *cobra.Command {
 		RunE:         addSubnetToRelayerService,
 		Args:         cobra.ExactArgs(1),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, addSubnetToRelayerServiceSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, addSubnetToRelayerServiceSupportedNetworkOptions)
 	return cmd
 }
 
 func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
-	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		addSubnetToRelayerServiceSupportedNetworkOptions,

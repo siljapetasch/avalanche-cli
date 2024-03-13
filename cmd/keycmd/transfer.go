@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
 	"github.com/ava-labs/avalanche-cli/pkg/key"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
@@ -41,7 +41,7 @@ const (
 )
 
 var (
-	transferSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
+	transferSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Mainnet, networkoptions.Fuji, networkoptions.Local}
 	send                            bool
 	receive                         bool
 	keyName                         string
@@ -63,7 +63,7 @@ func newTransferCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(0),
 		SilenceUsage: true,
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, transferSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, transferSupportedNetworkOptions)
 	cmd.Flags().BoolVar(
 		&PToX,
 		"fund-x-chain",
@@ -143,7 +143,8 @@ func transferF(*cobra.Command, []string) error {
 		return fmt.Errorf("only one between a keyname or a ledger index must be given")
 	}
 
-	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		transferSupportedNetworkOptions,

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-cli/cmd/subnetcmd"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanchego/ids"
 
@@ -25,8 +26,8 @@ import (
 )
 
 var (
-	globalNetworkFlags                  subnetcmd.NetworkFlags
-	addValidatorSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Mainnet}
+	globalNetworkFlags                  networkoptions.NetworkFlags
+	addValidatorSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Fuji, networkoptions.Mainnet}
 	keyName                             string
 	useLedger                           bool
 	ledgerAddresses                     []string
@@ -57,7 +58,7 @@ in the Primary Network`,
 		RunE:         addValidator,
 		Args:         cobra.ExactArgs(0),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, addValidatorSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, addValidatorSupportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji only]")
 	cmd.Flags().StringVar(&nodeIDStr, "nodeID", "", "set the NodeID of the validator to add")
 	cmd.Flags().Uint64Var(&weight, "weight", 0, "set the staking weight of the validator to add")
@@ -116,7 +117,8 @@ func addValidator(_ *cobra.Command, _ []string) error {
 		err    error
 	)
 
-	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		addValidatorSupportedNetworkOptions,
