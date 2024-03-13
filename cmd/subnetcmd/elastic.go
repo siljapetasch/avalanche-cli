@@ -39,7 +39,6 @@ const (
 
 var (
 	elasticSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
-	transformLocal                 bool
 	tokenNameFlag                  string
 	tokenSymbolFlag                string
 	useDefaultConfig               bool
@@ -453,61 +452,6 @@ func transformElasticSubnetLocal(sc models.Sidecar, subnetName string, tokenName
 	flags[constants.Network] = models.Local.String()
 	metrics.HandleTracking(cmd, app, flags)
 	return nil
-}
-
-// select which network to transform to elastic subnet
-func promptNetworkElastic(sc models.Sidecar, prompt string) (string, error) {
-	var networkOptions []string
-	for network := range sc.Networks {
-		switch network {
-		case models.Local.String():
-			networkOptions = append(networkOptions, localDeployment)
-		case models.Fuji.String():
-			networkOptions = append(networkOptions, fujiDeployment)
-		case models.Mainnet.String():
-			networkOptions = append(networkOptions, mainnetDeployment)
-		}
-	}
-
-	if len(networkOptions) == 0 {
-		return "", errors.New("no deployment target available, please first deploy created subnet")
-	}
-
-	selectedDeployment, err := app.Prompt.CaptureList(prompt, networkOptions)
-	if err != nil {
-		return "", err
-	}
-	return selectedDeployment, nil
-}
-
-func getNetworkOptions(sc models.Sidecar) []string {
-	var networkOptions []string
-	for network := range sc.Networks {
-		switch network {
-		case models.Local.String():
-			networkOptions = append(networkOptions, localDeployment)
-		case models.Fuji.String():
-			networkOptions = append(networkOptions, fujiDeployment)
-		case models.Mainnet.String():
-			networkOptions = append(networkOptions, mainnetDeployment)
-		}
-	}
-	return networkOptions
-}
-
-// select which network to transform to elastic subnet
-func selectNetworkToTransform(sc models.Sidecar) (string, error) {
-	networkPrompt := "Which network should transform into an elastic Subnet?"
-	networkOptions := getNetworkOptions(sc)
-	if len(networkOptions) == 0 {
-		return "", errors.New("no deployment target available, please first deploy created subnet")
-	}
-
-	selectedDeployment, err := app.Prompt.CaptureList(networkPrompt, networkOptions)
-	if err != nil {
-		return "", err
-	}
-	return selectedDeployment, nil
 }
 
 func PrintTransformResults(chain string, txID ids.ID, subnetID ids.ID, tokenName string, tokenSymbol string, assetID ids.ID) {

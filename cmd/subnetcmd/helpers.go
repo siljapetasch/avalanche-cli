@@ -108,7 +108,7 @@ func GetNetworkFromCmdLineFlags(
 		filteredSupportedNetworkOptions := []NetworkOption{}
 		for _, networkOption := range supportedNetworkOptions {
 			isInSidecar := false
-			for networkName, _ := range sc.Networks {
+			for networkName := range sc.Networks {
 				if strings.HasPrefix(networkName, networkOption.String()) {
 					isInSidecar = true
 				}
@@ -123,7 +123,7 @@ func GetNetworkFromCmdLineFlags(
 		}
 		// get valid cluster names from sidecar
 		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {
-			for networkName, _ := range sc.Networks {
+			for networkName := range sc.Networks {
 				if strings.HasPrefix(networkName, Cluster.String()) {
 					parts := strings.Split(networkName, " ")
 					if len(parts) != 2 {
@@ -136,7 +136,7 @@ func GetNetworkFromCmdLineFlags(
 		}
 		// get devnet endpoints from sidecar
 		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Devnet); err == nil {
-			for networkName, _ := range sc.Networks {
+			for networkName := range sc.Networks {
 				if strings.HasPrefix(networkName, Devnet.String()) {
 					parts := strings.Split(networkName, " ")
 					if len(parts) != 2 {
@@ -220,8 +220,7 @@ func GetNetworkFromCmdLineFlags(
 			}
 			networkOption = networkOptionFromString(networkOptionStr)
 		}
-		switch networkOption {
-		case Cluster:
+		if networkOption == Cluster {
 			if len(clusterNames) == 1 {
 				networkFlags.ClusterName = clusterNames[0]
 			} else {

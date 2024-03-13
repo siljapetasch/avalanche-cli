@@ -44,6 +44,9 @@ func stats(_ *cobra.Command, args []string) error {
 		statsSupportedNetworkOptions,
 		"",
 	)
+	if err != nil {
+		return err
+	}
 
 	chains, err := ValidateSubnetNameAndGetChains(args)
 	if err != nil {

@@ -17,12 +17,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	validatorsLocal   bool
-	validatorsTestnet bool
-	validatorsMainnet bool
-)
-
 var validatorsSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet, Cluster, Devnet}
 
 // avalanche subnet validators
