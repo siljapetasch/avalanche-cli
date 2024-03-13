@@ -347,6 +347,22 @@ func RunSSHSetupDevNet(host *models.Host, nodeInstanceDirPath string) error {
 	)
 }
 
+func RunSSHUploadClustersConfig(host *models.Host, localClustersConfigPath string) error {
+	remoteNodesDir := filepath.Join(constants.CloudNodeCLIConfigBasePath, constants.NodesDir)
+	if err := host.MkdirAll(
+		remoteNodesDir,
+		constants.SSHDirOpsTimeout,
+	); err != nil {
+		return err
+	}
+	remoteClustersConfigPath := filepath.Join(remoteNodesDir, constants.ClustersConfigFileName)
+	return host.Upload(
+		localClustersConfigPath,
+		remoteClustersConfigPath,
+		constants.SSHFileOpsTimeout,
+	)
+}
+
 // RunSSHUploadStakingFiles uploads staking files to a remote host via SSH.
 func RunSSHUploadStakingFiles(host *models.Host, nodeInstanceDirPath string) error {
 	if err := host.MkdirAll(

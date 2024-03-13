@@ -96,7 +96,7 @@ func syncSubnet(_ *cobra.Command, args []string) error {
 		return err
 	}
 	network := clustersConfig.Clusters[clusterName].Network
-	untrackedNodes, err := trackSubnet(hosts, subnetName, network)
+	untrackedNodes, err := trackSubnet(hosts, clusterName, subnetName, network)
 	if err != nil {
 		return err
 	}
@@ -112,21 +112,12 @@ func syncSubnet(_ *cobra.Command, args []string) error {
 // start tracking the specified subnet (similar to avalanche subnet join <subnetName> command)
 func trackSubnet(
 	hosts []*models.Host,
+	clusterName string,
 	subnetName string,
 	network models.Network,
 ) ([]string, error) {
 	subnetPath := "/tmp/" + subnetName + constants.ExportSubnetSuffix
-	networkFlag := ""
-	switch network.Kind {
-	case models.Local:
-		networkFlag = "--local"
-	case models.Devnet:
-		networkFlag = "--devnet"
-	case models.Fuji:
-		networkFlag = "--fuji"
-	case models.Mainnet:
-		networkFlag = "--mainnet"
-	}
+	networkFlag := "--cluster " + clusterName
 	if err := subnetcmd.CallExportSubnet(subnetName, subnetPath); err != nil {
 		return nil, err
 	}
@@ -140,6 +131,9 @@ func trackSubnet(
 			if err := ssh.RunSSHExportSubnet(host, subnetPath, subnetExportPath); err != nil {
 				nodeResults.AddResult(host.NodeID, nil, err)
 				return
+			}
+			if err := ssh.RunSSHUploadClustersConfig(host, app.GetClustersConfigPath()); err != nil {
+				nodeResults.AddResult(host.NodeID, nil, err)
 			}
 			if err := ssh.RunSSHTrackSubnet(host, subnetName, subnetExportPath, networkFlag); err != nil {
 				nodeResults.AddResult(host.NodeID, nil, err)

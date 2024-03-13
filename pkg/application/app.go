@@ -837,7 +837,9 @@ func (app *Avalanche) GetClusterConfig(clusterName string) (models.ClusterConfig
 	if err != nil {
 		return models.ClusterConfig{}, err
 	}
-	return clustersConfig.Clusters[clusterName], nil
+	clusterConfig := clustersConfig.Clusters[clusterName]
+	clusterConfig.Network = models.NewNetworkFromCluster(clusterConfig.Network, clusterName)
+	return clusterConfig, nil
 }
 
 func (app *Avalanche) GetClusterNetwork(clusterName string) (models.Network, error) {
@@ -845,8 +847,7 @@ func (app *Avalanche) GetClusterNetwork(clusterName string) (models.Network, err
 	if err != nil {
 		return models.UndefinedNetwork, err
 	}
-	network := models.NewNetworkFromCluster(clusterConfig.Network, clusterName)
-	return network, nil
+	return clusterConfig.Network, nil
 }
 
 func (app *Avalanche) ListClusterNames() ([]string, error) {
