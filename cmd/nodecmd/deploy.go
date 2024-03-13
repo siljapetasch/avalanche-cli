@@ -79,8 +79,7 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 	}
 
 	networkFlags := subnetcmd.NetworkFlags{
-		UseDevnet: true,
-		Endpoint:  clustersConfig.Clusters[clusterName].Network.Endpoint,
+		ClusterName: clusterName,
 	}
 	keyNameParam := ""
 	useLedgerParam := false

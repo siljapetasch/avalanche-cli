@@ -29,7 +29,7 @@ type MsgCmdFlags struct {
 }
 
 var (
-	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
+	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
 	msgCmdFlags                MsgCmdFlags
 )
 
@@ -56,11 +56,18 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 	destSubnetName := args[1]
 	message := args[2]
 
+	subnetNameToGetNetworkFrom := ""
+	if !isCChain(sourceSubnetName) {
+		subnetNameToGetNetworkFrom = sourceSubnetName
+	}
+	if !isCChain(destSubnetName) {
+		subnetNameToGetNetworkFrom = destSubnetName
+	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
 		msgCmdFlags.Network,
 		true,
 		msgSupportedNetworkOptions,
-		"",
+		subnetNameToGetNetworkFrom,
 	)
 	if err != nil {
 		return err
@@ -209,7 +216,7 @@ func getSubnetParams(network models.Network, subnetName string) (ids.ID, ids.ID,
 		teleporterRegistryAddress  string
 		k                          *key.SoftKey
 	)
-	if strings.ToLower(subnetName) == "c-chain" || strings.ToLower(subnetName) == "cchain" {
+	if isCChain(subnetName) {
 		subnetID = ids.Empty
 		chainID, err = subnet.GetChainID(network, "C")
 		if err != nil {
@@ -251,14 +258,6 @@ func getSubnetParams(network models.Network, subnetName string) (ids.ID, ids.ID,
 	return subnetID, chainID, teleporterMessengerAddress, teleporterRegistryAddress, k, nil
 }
 
-func getDevnetEndpoint(subnetName string) (string, error) {
-	if strings.ToLower(subnetName) == "c-chain" || strings.ToLower(subnetName) == "cchain" {
-		return "", nil
-	}
-	sc, err := app.LoadSidecar(subnetName)
-	if err != nil {
-		return "", err
-	}
-	_ = sc
-	return "", fmt.Errorf("PEPE")
+func isCChain(subnetName string) bool {
+	return strings.ToLower(subnetName) == "c-chain" || strings.ToLower(subnetName) == "cchain"
 }

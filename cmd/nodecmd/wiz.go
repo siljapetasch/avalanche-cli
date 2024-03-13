@@ -226,7 +226,11 @@ func wiz(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	blockchainID := sc.Networks[models.Devnet.String()].BlockchainID
+	network, err := app.GetClusterNetwork(clusterName)
+	if err != nil {
+		return err
+	}
+	blockchainID := sc.Networks[network.Name()].BlockchainID
 	if blockchainID == ids.Empty {
 		return ErrNoBlockchainID
 	}
@@ -251,14 +255,9 @@ func wiz(cmd *cobra.Command, args []string) error {
 		ux.Logger.PrintToUser("")
 		ux.Logger.PrintToUser(logging.Green.Wrap("Setting up teleporter on subnet"))
 		ux.Logger.PrintToUser("")
-		clustersConfig, err := app.LoadClustersConfig()
-		if err != nil {
-			return err
-		}
 		flags := teleportercmd.DeployCmdFlags{
 			Network: subnetcmd.NetworkFlags{
-				UseDevnet: true,
-				Endpoint:  clustersConfig.Clusters[clusterName].Network.Endpoint,
+				ClusterName: clusterName,
 			},
 		}
 		if err := teleportercmd.DeployWithLocalFlags(nil, []string{subnetName}, flags); err != nil {

@@ -120,6 +120,9 @@ func GetNetworkFromCmdLineFlags(
 			}
 		}
 		supportedNetworkOptions = filteredSupportedNetworkOptions
+		if len(supportedNetworkOptions) == 0 {
+			return models.UndefinedNetwork, fmt.Errorf("no network options available for subnet %s", subnetName)
+		}
 		// get valid cluster names from sidecar
 		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {
 			for networkName, _ := range sc.Networks {
@@ -207,22 +210,30 @@ func GetNetworkFromCmdLineFlags(
 				supportedNetworkOptions = append(supportedNetworkOptions[:index], supportedNetworkOptions[index+1:]...)
 			}
 		}
-		networkOptionStr, err := app.Prompt.CaptureList(
-			"Choose a network for the operation",
-			utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
-		)
-		if err != nil {
-			return models.UndefinedNetwork, err
-		}
-		networkOption = networkOptionFromString(networkOptionStr)
-		switch networkOption {
-		case Cluster:
-			networkFlags.ClusterName, err = app.Prompt.CaptureList(
-				"Choose a cluster",
-				clusterNames,
+		if len(supportedNetworkOptions) == 1 {
+			networkOption = supportedNetworkOptions[0]
+		} else {
+			networkOptionStr, err := app.Prompt.CaptureList(
+				"Choose a network for the operation",
+				utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
 			)
 			if err != nil {
 				return models.UndefinedNetwork, err
+			}
+			networkOption = networkOptionFromString(networkOptionStr)
+		}
+		switch networkOption {
+		case Cluster:
+			if len(clusterNames) == 1 {
+				networkFlags.ClusterName = clusterNames[0]
+			} else {
+				networkFlags.ClusterName, err = app.Prompt.CaptureList(
+					"Choose a cluster",
+					clusterNames,
+				)
+				if err != nil {
+					return models.UndefinedNetwork, err
+				}
 			}
 		}
 	}

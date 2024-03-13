@@ -91,12 +91,7 @@ func syncSubnet(_ *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("the Avalanche Go version of node(s) %s is incompatible with VM RPC version of %s", incompatibleNodes, subnetName)
 	}
-	clustersConfig, err := app.LoadClustersConfig()
-	if err != nil {
-		return err
-	}
-	network := clustersConfig.Clusters[clusterName].Network
-	untrackedNodes, err := trackSubnet(hosts, clusterName, subnetName, network)
+	untrackedNodes, err := trackSubnet(hosts, clusterName, subnetName)
 	if err != nil {
 		return err
 	}
@@ -114,7 +109,6 @@ func trackSubnet(
 	hosts []*models.Host,
 	clusterName string,
 	subnetName string,
-	network models.Network,
 ) ([]string, error) {
 	subnetPath := "/tmp/" + subnetName + constants.ExportSubnetSuffix
 	networkFlag := "--cluster " + clusterName

@@ -138,7 +138,6 @@ func (t *Deployer) DeployMessenger(
 		return false, "", err
 	}
 	// check if contract is already deployed
-	fmt.Println(rpcURL)
 	client, err := evm.GetClient(rpcURL)
 	if err != nil {
 		return false, "", err
