@@ -343,14 +343,10 @@ func createClusterYAMLFile(clusterName, subnetID, chainID string, separateHost *
 
 	enc := yaml.NewEncoder(yamlFile)
 
-	clustersConfig := models.ClustersConfig{}
-	if app.ClustersConfigExists() {
-		clustersConfig, err = app.LoadClustersConfig()
-		if err != nil {
-			return err
-		}
+	clusterConf, err := app.GetClusterConfig(clusterName)
+	if err != nil {
+		return err
 	}
-	clusterConf := clustersConfig.Clusters[clusterName]
 	if err := checkCluster(clusterName); err != nil {
 		return err
 	}
