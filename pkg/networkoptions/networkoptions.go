@@ -152,6 +152,8 @@ func GetNetworkFromCmdLineFlags(
 	subnetName string,
 ) (models.Network, error) {
 	var err error
+	supportedNetworkOptionsStrs := ""
+	filteredSupportedNetworkOptionsStrs := ""
 	scClusterNames := []string{}
 	scDevnetEndpoints := []string{}
 	if subnetName != "" {
@@ -160,15 +162,10 @@ func GetNetworkFromCmdLineFlags(
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
-		supportedNetworkOptionsStrs := strings.Join(utils.Map(supportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
-		filteredSupportedNetworkOptionsStrs := strings.Join(utils.Map(filteredSupportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
+		supportedNetworkOptionsStrs = strings.Join(utils.Map(supportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
+		filteredSupportedNetworkOptionsStrs = strings.Join(utils.Map(filteredSupportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
 		if len(filteredSupportedNetworkOptions) == 0 {
 			return models.UndefinedNetwork, fmt.Errorf("no supported deployed networks available on subnet %q. please deploy to one of: [%s]", subnetName, supportedNetworkOptionsStrs)
-		}
-		if supportedNetworkOptionsStrs != filteredSupportedNetworkOptionsStrs {
-			ux.Logger.PrintToUser("currently supported deployed networks on %q for this command: [%s]", subnetName, filteredSupportedNetworkOptionsStrs)
-			ux.Logger.PrintToUser("for more options, deploy %q to one of: [%s]", subnetName, supportedNetworkOptionsStrs)
-			ux.Logger.PrintToUser("")
 		}
 		supportedNetworkOptions = filteredSupportedNetworkOptions
 	}
@@ -217,6 +214,11 @@ func GetNetworkFromCmdLineFlags(
 	}
 
 	if networkOption == Undefined {
+		if subnetName != "" && supportedNetworkOptionsStrs != filteredSupportedNetworkOptionsStrs {
+			ux.Logger.PrintToUser("currently supported deployed networks on %q for this command: [%s]", subnetName, filteredSupportedNetworkOptionsStrs)
+			ux.Logger.PrintToUser("for more options, deploy %q to one of: [%s]", subnetName, supportedNetworkOptionsStrs)
+			ux.Logger.PrintToUser("")
+		}
 		// undefined, so prompt
 		clusterNames, err := app.ListClusterNames()
 		if err != nil {
