@@ -7,6 +7,7 @@ import (
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/txutils"
@@ -16,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var changeOwnerSupportedNetworkOptions = []NetworkOption{Local, Devnet, Fuji, Mainnet}
+var changeOwnerSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Devnet, networkoptions.Fuji, networkoptions.Mainnet}
 
 // avalanche subnet changeOwner
 func newChangeOwnerCmd() *cobra.Command {
@@ -30,7 +31,7 @@ This command currently only works on Subnets deployed to Devnet, Fuji or Mainnet
 		RunE:         changeOwner,
 		Args:         cobra.ExactArgs(1),
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, changeOwnerSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, changeOwnerSupportedNetworkOptions)
 	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji/devnet)")
 	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji/devnet]")
@@ -46,7 +47,8 @@ This command currently only works on Subnets deployed to Devnet, Fuji or Mainnet
 func changeOwner(_ *cobra.Command, args []string) error {
 	subnetName := args[0]
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		changeOwnerSupportedNetworkOptions,

@@ -18,6 +18,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/localnetworkinterface"
 	"github.com/ava-labs/avalanche-cli/pkg/metrics"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/txutils"
@@ -33,7 +34,7 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var deploySupportedNetworkOptions = []NetworkOption{Local, Cluster, Fuji, Mainnet, Devnet}
+var deploySupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Cluster, networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Devnet}
 
 var (
 	sameControlKey           bool
@@ -77,7 +78,7 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 		PersistentPostRun: handlePostRun,
 		Args:              cobra.ExactArgs(1),
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
 	cmd.Flags().StringVar(&userProvidedAvagoVersion, "avalanchego-version", "latest", "use this version of avalanchego (ex: v1.17.12)")
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji/devnet deploy only]")
 	cmd.Flags().BoolVarP(&sameControlKey, "same-control-key", "s", false, "use the fee-paying key as control key")
@@ -98,7 +99,7 @@ so you can take your locally tested Subnet and deploy it on Fuji or Mainnet.`,
 func CallDeploy(
 	cmd *cobra.Command,
 	subnetName string,
-	networkFlags NetworkFlags,
+	networkFlags networkoptions.NetworkFlags,
 	keyNameParam string,
 	useLedgerParam bool,
 	useEwoqParam bool,
@@ -161,7 +162,7 @@ func checkSubnetEVMDefaultAddressNotInAlloc(network models.Network, chain string
 	return nil
 }
 
-func runDeploy(cmd *cobra.Command, args []string, supportedNetworkOptions []NetworkOption) error {
+func runDeploy(cmd *cobra.Command, args []string, supportedNetworkOptions []networkoptions.NetworkOption) error {
 	skipCreatePrompt = true
 	deploySupportedNetworkOptions = supportedNetworkOptions
 	return deploySubnet(cmd, args)
@@ -275,7 +276,8 @@ func deploySubnet(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		deploySupportedNetworkOptions,

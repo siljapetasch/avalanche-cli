@@ -9,6 +9,7 @@ import (
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/ava-labs/avalanche-cli/pkg/vm"
@@ -22,7 +23,7 @@ import (
 )
 
 var (
-	importPublicSupportedNetworkOptions = []NetworkOption{Fuji, Mainnet}
+	importPublicSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Fuji, networkoptions.Mainnet}
 	genesisFilePath                     string
 	blockchainIDstr                     string
 	nodeURL                             string
@@ -43,7 +44,7 @@ doesn't overwrite an existing Subnet with the same name. To allow overwrites, pr
 flag.`,
 	}
 
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, importPublicSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, importPublicSupportedNetworkOptions)
 
 	cmd.Flags().StringVar(&nodeURL, "node-url", "", "[optional] URL of an already running subnet validator")
 
@@ -71,7 +72,8 @@ flag.`,
 }
 
 func importPublic(*cobra.Command, []string) error {
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		importPublicSupportedNetworkOptions,

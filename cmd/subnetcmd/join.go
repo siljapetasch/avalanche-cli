@@ -15,6 +15,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/plugins"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
@@ -33,9 +34,9 @@ import (
 const ewoqPChainAddr = "P-custom18jma8ppw3nhx5r4ap8clazz0dps7rv5u9xde7p"
 
 var (
-	joinAllSupportedNetworkOptions        = []NetworkOption{Local, Fuji, Mainnet, Devnet, Cluster}
-	joinNonElasticSupportedNetworkOptions = []NetworkOption{Fuji, Mainnet, Devnet, Cluster}
-	joinElasticSupportedNetworkOptions    = []NetworkOption{Local, Fuji}
+	joinAllSupportedNetworkOptions        = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Devnet, networkoptions.Cluster}
+	joinNonElasticSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Devnet, networkoptions.Cluster}
+	joinElasticSupportedNetworkOptions    = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji}
 
 	// path to avalanchego config file
 	avagoConfigPath string
@@ -78,7 +79,7 @@ This command currently only supports Subnets deployed on the Fuji Testnet and Ma
 		RunE:         joinCmd,
 		Args:         cobra.ExactArgs(1),
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, joinAllSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, joinAllSupportedNetworkOptions)
 	cmd.Flags().StringVar(&avagoConfigPath, "avalanchego-config", "", "file path of the avalanchego config file")
 	cmd.Flags().StringVar(&pluginDir, "plugin-dir", "", "file path of avalanchego's plugin directory")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "path of avalanchego's data dir directory")
@@ -112,13 +113,14 @@ func joinCmd(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	var supportedNetworkOptions []NetworkOption
+	var supportedNetworkOptions []networkoptions.NetworkOption
 	if joinElastic {
 		supportedNetworkOptions = joinElasticSupportedNetworkOptions
 	} else {
 		supportedNetworkOptions = joinNonElasticSupportedNetworkOptions
 	}
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		supportedNetworkOptions,

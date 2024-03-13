@@ -12,6 +12,7 @@ import (
 
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/ava-labs/avalanchego/api/info"
 	"github.com/ava-labs/avalanchego/ids"
@@ -21,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var statsSupportedNetworkOptions = []NetworkOption{Fuji, Mainnet}
+var statsSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Fuji, networkoptions.Mainnet}
 
 // avalanche subnet stats
 func newStatsCmd() *cobra.Command {
@@ -33,12 +34,13 @@ func newStatsCmd() *cobra.Command {
 		RunE:         stats,
 		SilenceUsage: true,
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, statsSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, statsSupportedNetworkOptions)
 	return cmd
 }
 
 func stats(_ *cobra.Command, args []string) error {
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		statsSupportedNetworkOptions,

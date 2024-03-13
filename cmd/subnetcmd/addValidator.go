@@ -10,6 +10,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/txutils"
@@ -22,7 +23,7 @@ import (
 )
 
 var (
-	addValidatorSupportedNetworkOptions = []NetworkOption{Local, Devnet, Fuji, Mainnet}
+	addValidatorSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Devnet, networkoptions.Fuji, networkoptions.Mainnet}
 
 	nodeIDStr              string
 	weight                 uint64
@@ -58,7 +59,7 @@ Testnet or Mainnet.`,
 		RunE:         addValidator,
 		Args:         cobra.ExactArgs(1),
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, addValidatorSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, addValidatorSupportedNetworkOptions)
 
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji/devnet only]")
 	cmd.Flags().StringVar(&nodeIDStr, "nodeID", "", "set the NodeID of the validator to add")
@@ -81,7 +82,8 @@ Testnet or Mainnet.`,
 }
 
 func addValidator(_ *cobra.Command, args []string) error {
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		addValidatorSupportedNetworkOptions,

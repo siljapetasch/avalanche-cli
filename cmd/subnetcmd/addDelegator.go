@@ -16,12 +16,13 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/spf13/cobra"
 )
 
-var addPermissionlessDelegatorSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+var addPermissionlessDelegatorSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji, networkoptions.Mainnet}
 
 // avalanche subnet addPermissionlessDelegator
 func newAddPermissionlessDelegatorCmd() *cobra.Command {
@@ -49,7 +50,7 @@ these prompts by providing the values with flags.`,
 		Args:         cobra.ExactArgs(1),
 	}
 
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, addPermissionlessDelegatorSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, addPermissionlessDelegatorSupportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji deploy only]")
 	cmd.Flags().BoolVarP(&useLedger, "ledger", "g", false, "use ledger instead of key (always true on mainnet, defaults to false on fuji)")
 	cmd.Flags().StringSliceVar(&ledgerAddresses, "ledger-addrs", []string{}, "use the given ledger addresses")
@@ -72,7 +73,8 @@ func addPermissionlessDelegator(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		addPermissionlessDelegatorSupportedNetworkOptions,

@@ -16,6 +16,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
 	"github.com/ava-labs/avalanche-cli/pkg/metrics"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	subnet "github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/txutils"
@@ -38,7 +39,7 @@ const (
 )
 
 var (
-	elasticSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+	elasticSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji, networkoptions.Mainnet}
 	tokenNameFlag                  string
 	tokenSymbolFlag                string
 	useDefaultConfig               bool
@@ -62,7 +63,7 @@ mechanics will work.`,
 		RunE:              transformElasticSubnet,
 		PersistentPostRun: handlePostRun,
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, elasticSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, elasticSupportedNetworkOptions)
 	cmd.Flags().StringVar(&tokenNameFlag, "tokenName", "", "specify the token name")
 	cmd.Flags().StringVar(&tokenSymbolFlag, "tokenSymbol", "", "specify the token symbol")
 	cmd.Flags().BoolVar(&useDefaultConfig, "default", false, "use default elastic subnet config values")
@@ -152,7 +153,8 @@ func transformElasticSubnet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to load sidecar: %w", err)
 	}
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		true,
 		elasticSupportedNetworkOptions,

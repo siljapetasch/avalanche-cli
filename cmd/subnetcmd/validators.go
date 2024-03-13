@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
@@ -17,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var validatorsSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet, Cluster, Devnet}
+var validatorsSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji, networkoptions.Mainnet, networkoptions.Cluster, networkoptions.Devnet}
 
 // avalanche subnet validators
 func newValidatorsCmd() *cobra.Command {
@@ -30,14 +31,15 @@ severarl statistics about them.`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, validatorsSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, validatorsSupportedNetworkOptions)
 	return cmd
 }
 
 func printValidators(_ *cobra.Command, args []string) error {
 	subnetName := args[0]
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		validatorsSupportedNetworkOptions,

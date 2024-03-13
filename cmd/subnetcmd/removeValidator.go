@@ -10,6 +10,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/keychain"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
+	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/prompts"
 	"github.com/ava-labs/avalanche-cli/pkg/subnet"
 	"github.com/ava-labs/avalanche-cli/pkg/txutils"
@@ -20,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var removeValidatorSupportedNetworkOptions = []NetworkOption{Local, Fuji, Mainnet}
+var removeValidatorSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Local, networkoptions.Fuji, networkoptions.Mainnet}
 
 // avalanche subnet removeValidator
 func newRemoveValidatorCmd() *cobra.Command {
@@ -36,7 +37,7 @@ these prompts by providing the values with flags.`,
 		RunE:         removeValidator,
 		Args:         cobra.ExactArgs(1),
 	}
-	AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, removeValidatorSupportedNetworkOptions)
+	networkoptions.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, removeValidatorSupportedNetworkOptions)
 	cmd.Flags().StringVarP(&keyName, "key", "k", "", "select the key to use [fuji deploy only]")
 	cmd.Flags().StringVar(&nodeIDStr, "nodeID", "", "set the NodeID of the validator to remove")
 	cmd.Flags().StringSliceVar(&subnetAuthKeys, "subnet-auth-keys", nil, "control keys that will be used to authenticate the removeValidator tx")
@@ -52,7 +53,8 @@ func removeValidator(_ *cobra.Command, args []string) error {
 		err    error
 	)
 
-	network, err := GetNetworkFromCmdLineFlags(
+	network, err := networkoptions.GetNetworkFromCmdLineFlags(
+		app,
 		globalNetworkFlags,
 		false,
 		removeValidatorSupportedNetworkOptions,
