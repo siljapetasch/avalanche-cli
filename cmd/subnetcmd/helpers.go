@@ -9,6 +9,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/cmd/flags"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
+	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/ava-labs/avalanchego/api/info"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
@@ -105,6 +106,7 @@ func GetNetworkFromCmdLineFlags(
 		if err != nil {
 			return models.UndefinedNetwork, err
 		}
+		supportedNetworkOptionsStrs := strings.Join(utils.Map(supportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
 		filteredSupportedNetworkOptions := []NetworkOption{}
 		for _, networkOption := range supportedNetworkOptions {
 			isInSidecar := false
@@ -119,7 +121,13 @@ func GetNetworkFromCmdLineFlags(
 		}
 		supportedNetworkOptions = filteredSupportedNetworkOptions
 		if len(supportedNetworkOptions) == 0 {
-			return models.UndefinedNetwork, fmt.Errorf("no network options available for subnet %s", subnetName)
+			return models.UndefinedNetwork, fmt.Errorf("no supported deployed networks available for subnet %s for this cmd. please deploy to one of: [%s]", subnetName, supportedNetworkOptionsStrs)
+		}
+		filteredSupportedNetworkOptionsStrs := strings.Join(utils.Map(supportedNetworkOptions, func(s NetworkOption) string { return s.String() }), ", ")
+		if supportedNetworkOptionsStrs != filteredSupportedNetworkOptionsStrs {
+			ux.Logger.PrintToUser("currently supported deployed networks on %s for this cmd: [%s]", subnetName, filteredSupportedNetworkOptionsStrs)
+			ux.Logger.PrintToUser("if wanting to have more options, please deploy %s to another one of: [%s]", subnetName, supportedNetworkOptionsStrs)
+			ux.Logger.PrintToUser("")
 		}
 		// get valid cluster names from sidecar
 		if _, err := utils.GetIndexInSlice(supportedNetworkOptions, Cluster); err == nil {
@@ -139,11 +147,13 @@ func GetNetworkFromCmdLineFlags(
 			for networkName := range sc.Networks {
 				if strings.HasPrefix(networkName, Devnet.String()) {
 					parts := strings.Split(networkName, " ")
-					if len(parts) != 2 {
+					if len(parts) > 2 {
 						return models.UndefinedNetwork, fmt.Errorf("expected 'Devnet endpoint' on network name %s", networkName)
 					}
-					endpoint := parts[1]
-					scDevnetEndpoints = append(scDevnetEndpoints, endpoint)
+					if len(parts) == 2 {
+						endpoint := parts[1]
+						scDevnetEndpoints = append(scDevnetEndpoints, endpoint)
+					}
 				}
 			}
 		}
@@ -185,7 +195,7 @@ func GetNetworkFromCmdLineFlags(
 			if len(scDevnetEndpoints) != 0 {
 				endpointsMsg = fmt.Sprintf(". valid devnet endpoints: [%s]", strings.Join(scDevnetEndpoints, ", "))
 			}
-			errMsg = fmt.Errorf("network flag %s is not supported on subnet %s. use one of %s%s%s", networkFlagsMap[networkOption], subnetName, supportedNetworksFlags, clustersMsg, endpointsMsg)
+			errMsg = fmt.Errorf("network flag %s is not available on subnet %s. use one of %s or made a deploy for that network%s%s", networkFlagsMap[networkOption], subnetName, supportedNetworksFlags, clustersMsg, endpointsMsg)
 		}
 		return models.UndefinedNetwork, errMsg
 	}
@@ -208,29 +218,21 @@ func GetNetworkFromCmdLineFlags(
 				supportedNetworkOptions = append(supportedNetworkOptions[:index], supportedNetworkOptions[index+1:]...)
 			}
 		}
-		if len(supportedNetworkOptions) == 1 {
-			networkOption = supportedNetworkOptions[0]
-		} else {
-			networkOptionStr, err := app.Prompt.CaptureList(
-				"Choose a network for the operation",
-				utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
+		networkOptionStr, err := app.Prompt.CaptureList(
+			"Choose a network for the operation",
+			utils.Map(supportedNetworkOptions, func(n NetworkOption) string { return n.String() }),
+		)
+		if err != nil {
+			return models.UndefinedNetwork, err
+		}
+		networkOption = networkOptionFromString(networkOptionStr)
+		if networkOption == Cluster {
+			networkFlags.ClusterName, err = app.Prompt.CaptureList(
+				"Choose a cluster",
+				clusterNames,
 			)
 			if err != nil {
 				return models.UndefinedNetwork, err
-			}
-			networkOption = networkOptionFromString(networkOptionStr)
-		}
-		if networkOption == Cluster {
-			if len(clusterNames) == 1 {
-				networkFlags.ClusterName = clusterNames[0]
-			} else {
-				networkFlags.ClusterName, err = app.Prompt.CaptureList(
-					"Choose a cluster",
-					clusterNames,
-				)
-				if err != nil {
-					return models.UndefinedNetwork, err
-				}
 			}
 		}
 	}
@@ -286,7 +288,7 @@ func GetNetworkFromCmdLineFlags(
 	return network, nil
 }
 
-func CreateSubnetFirst(cmd *cobra.Command, args []string, subnetName string, skipPrompt bool) error {
+func CreateSubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) error {
 	if !app.SubnetConfigExists(subnetName) {
 		if !skipPrompt {
 			yes, err := app.Prompt.CaptureNoYes(fmt.Sprintf("Subnet %s is not created yet. Do you want to create it first?", subnetName))
@@ -297,27 +299,43 @@ func CreateSubnetFirst(cmd *cobra.Command, args []string, subnetName string, ski
 				return fmt.Errorf("subnet not available and not being created first")
 			}
 		}
-		return createSubnetConfig(cmd, args)
+		return createSubnetConfig(cmd, []string{subnetName})
 	}
 	return nil
 }
 
-func DeploySubnetFirst(cmd *cobra.Command, args []string, subnetName string, skipPrompt bool) error {
-	sc, err := app.LoadSidecar(subnetName)
-	if err != nil {
-		return err
+func DeploySubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) error {
+	var (
+		doDeploy       bool
+		msg            string
+		errIfNoChoosen error
+	)
+	if !app.SubnetConfigExists(subnetName) {
+		doDeploy = true
+		msg = fmt.Sprintf("Subnet %s is not created yet. Do you want to create it first?", subnetName)
+		errIfNoChoosen = fmt.Errorf("subnet not available and not being created first")
+	} else {
+		sc, err := app.LoadSidecar(subnetName)
+		if err != nil {
+			return err
+		}
+		if len(sc.Networks) == 0 {
+			doDeploy = true
+			msg = fmt.Sprintf("Subnet %s is not deployed yet. Do you want to deploy it first?", subnetName)
+			errIfNoChoosen = fmt.Errorf("subnet not deployed and not being deployed first")
+		}
 	}
-	if len(sc.Networks) == 0 {
+	if doDeploy {
 		if !skipPrompt {
-			yes, err := app.Prompt.CaptureNoYes(fmt.Sprintf("Subnet %s is not deployed yet. Do you want to deploy it first?", subnetName))
+			yes, err := app.Prompt.CaptureNoYes(msg)
 			if err != nil {
 				return err
 			}
 			if !yes {
-				return fmt.Errorf("subnet not deployed and not being deployed first")
+				return errIfNoChoosen
 			}
 		}
-		return runDeploy(cmd, args)
+		return runDeploy(cmd, []string{subnetName})
 	}
 	return nil
 }

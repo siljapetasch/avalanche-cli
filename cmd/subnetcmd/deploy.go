@@ -247,7 +247,8 @@ func getSubnetEVMMainnetChainID(sc *models.Sidecar, subnetName string) error {
 // deploySubnet is the cobra command run for deploying subnets
 func deploySubnet(cmd *cobra.Command, args []string) error {
 	subnetName := args[0]
-	if err := CreateSubnetFirst(cmd, args, subnetName, skipCreatePrompt); err != nil {
+
+	if err := CreateSubnetFirst(cmd, subnetName, skipCreatePrompt); err != nil {
 		return err
 	}
 

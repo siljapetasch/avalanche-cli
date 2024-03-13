@@ -279,7 +279,7 @@ func transferF(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		if addr == receiverAddr {
+		if addr == receiverAddr && PToP {
 			return fmt.Errorf("sender addr is the same as receiver addr")
 		}
 		ux.Logger.PrintToUser("- send %.9f AVAX from %s to target address %s", float64(amount)/float64(units.Avax), addrStr, receiverAddrStr)
