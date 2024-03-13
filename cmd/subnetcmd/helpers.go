@@ -66,9 +66,7 @@ type NetworkFlags struct {
 	ClusterName string
 }
 
-var (
-	globalNetworkFlags NetworkFlags
-)
+var globalNetworkFlags NetworkFlags
 
 func AddNetworkFlagsToCmd(cmd *cobra.Command, networkFlags *NetworkFlags, alwaysAddEndpoint bool, supportedNetworkOptions []NetworkOption) {
 	addEndpoint := alwaysAddEndpoint
