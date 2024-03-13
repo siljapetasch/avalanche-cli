@@ -7,10 +7,11 @@ import (
 	"os/exec"
 	"strings"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/ava-labs/avalanche-cli/pkg/constants"
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/utils"
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
 	awsAPI "github.com/ava-labs/avalanche-cli/pkg/cloud/aws"
@@ -95,25 +96,41 @@ func getAWSMonitoringEC2Svc(awsProfile, monitoringRegion string) (map[string]*aw
 	return ec2SvcMap, nil
 }
 
-func getAWSCloudConfig(awsProfile string) (map[string]*awsAPI.AwsCloud, map[string]string, map[string]int, error) {
-	finalRegions := map[string]int{}
+func getAWSCloudConfig(awsProfile string, singleNode bool, clusterSgRegions []string) (map[string]*awsAPI.AwsCloud, map[string]string, map[string]NumNodes, error) {
+	finalRegions := map[string]NumNodes{}
 	switch {
-	case len(numNodes) != len(utils.Unique(cmdLineRegion)):
+	case len(numValidatorsNodes) != len(utils.Unique(cmdLineRegion)):
 		return nil, nil, nil, fmt.Errorf("number of nodes and regions should be the same")
-	case len(cmdLineRegion) == 0 && len(numNodes) == 0:
+	case globalNetworkFlags.UseDevnet && len(numAPINodes) != len(utils.Unique(cmdLineRegion)):
+		return nil, nil, nil, fmt.Errorf("number of api nodes and regions should be the same")
+	case globalNetworkFlags.UseDevnet && len(numAPINodes) != len(numValidatorsNodes):
+		return nil, nil, nil, fmt.Errorf("number of api nodes and validator nodes should be the same")
+	case len(cmdLineRegion) == 0 && len(numValidatorsNodes) == 0 && len(numAPINodes) == 0:
 		var err error
-		finalRegions, err = getRegionsNodeNum(constants.AWSCloudService)
-		if err != nil {
-			return nil, nil, nil, err
+		if singleNode {
+			selectedRegion, err := getSeparateHostNodeParam(constants.AWSCloudService)
+			finalRegions = map[string]NumNodes{selectedRegion: {1, 0}}
+			if err != nil {
+				return nil, nil, nil, err
+			}
+		} else {
+			finalRegions, err = getRegionsNodeNum(constants.AWSCloudService)
+			if err != nil {
+				return nil, nil, nil, err
+			}
 		}
 	default:
 		for i, region := range cmdLineRegion {
-			finalRegions[region] = numNodes[i]
+			if globalNetworkFlags.UseDevnet {
+				finalRegions[region] = NumNodes{numValidatorsNodes[i], numAPINodes[i]}
+			} else {
+				finalRegions[region] = NumNodes{numValidatorsNodes[i], 0}
+			}
 		}
 	}
 	ec2SvcMap := map[string]*awsAPI.AwsCloud{}
 	amiMap := map[string]string{}
-	numNodesMap := map[string]int{}
+	numNodesMap := map[string]NumNodes{}
 	// verify regions are valid
 	if invalidRegions, err := checkRegions(maps.Keys(finalRegions)); err != nil {
 		return nil, nil, nil, err
@@ -122,13 +139,24 @@ func getAWSCloudConfig(awsProfile string) (map[string]*awsAPI.AwsCloud, map[stri
 	}
 	for region := range finalRegions {
 		var err error
-
-		ec2SvcMap[region], err = getAWSCloudCredentials(awsProfile, region)
-		if err != nil {
-			if !strings.Contains(err.Error(), "cloud access is required") {
-				printNoCredentialsOutput(awsProfile)
+    if singleNode {
+			for _, clusterRegion := range clusterSgRegions {
+				ec2SvcMap[clusterRegion], err = getAWSCloudCredentials(awsProfile, clusterRegion)
+				if err != nil {
+					if !strings.Contains(err.Error(), "cloud access is required") {
+						printNoCredentialsOutput(awsProfile)
+					}
+					return nil, nil, nil, err
+				}
 			}
-			return nil, nil, nil, err
+		} else {
+			ec2SvcMap[region], err = getAWSCloudCredentials(awsProfile, region)
+			if err != nil {
+				if !strings.Contains(err.Error(), "cloud access is required") {
+					printNoCredentialsOutput(awsProfile)
+				}
+				return nil, nil, nil, err
+			}
 		}
 		amiMap[region], err = ec2SvcMap[region].GetUbuntuAMIID()
 		if err != nil {
@@ -355,10 +383,33 @@ func AddMonitoringSecurityGroupRule(ec2Svc map[string]*awsAPI.AwsCloud, monitori
 	return nil
 }
 
+func grantAccessToPublicIPViaSecurityGroup(ec2Svc *awsAPI.AwsCloud, publicIP, securityGroupName, region string) error {
+	securityGroupExists, sg, err := ec2Svc.CheckSecurityGroupExists(securityGroupName)
+	if err != nil {
+		return err
+	}
+	if !securityGroupExists {
+		return fmt.Errorf("security group %s doesn't exist in region %s", securityGroupName, region)
+	}
+	metricsPortInSG := awsAPI.CheckUserIPInSg(&sg, publicIP, constants.AvalanchegoMachineMetricsPort)
+	apiPortInSG := awsAPI.CheckUserIPInSg(&sg, publicIP, constants.AvalanchegoAPIPort)
+	if !metricsPortInSG {
+		if err = ec2Svc.AddSecurityGroupRule(*sg.GroupId, "ingress", "tcp", publicIP+constants.IPAddressSuffix, constants.AvalanchegoMachineMetricsPort); err != nil {
+			return err
+		}
+	}
+	if !apiPortInSG {
+		if err = ec2Svc.AddSecurityGroupRule(*sg.GroupId, "ingress", "tcp", publicIP+constants.IPAddressSuffix, constants.AvalanchegoAPIPort); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func createAWSInstances(
 	ec2Svc map[string]*awsAPI.AwsCloud,
 	nodeType string,
-	numNodes map[string]int,
+	numNodes map[string]NumNodes,
 	regions []string,
 	ami map[string]string,
 	forMonitoring bool) (
@@ -375,7 +426,7 @@ func createAWSInstances(
 			ImageID:           ami[region],
 			CertName:          prefix + "-" + region + constants.CertSuffix,
 			SecurityGroupName: prefix + "-" + region + constants.AWSSecurityGroupSuffix,
-			NumNodes:          numNodes[region],
+			NumNodes:          numNodes[region].All(),
 			InstanceType:      nodeType,
 		}
 	}
@@ -387,25 +438,25 @@ func createAWSInstances(
 		} else {
 			ux.Logger.PrintToUser("Failed to create AWS cloud server(s) with error: %s", err.Error())
 		}
-		// we stop created instances so that user doesn't pay for unused EC2 instances
-		ux.Logger.PrintToUser("Stopping all created AWS instances due to error to prevent charge for unused AWS instances...")
+		// we destroy created instances so that user doesn't pay for unused EC2 instances
+		ux.Logger.PrintToUser("Destroying all created AWS instances due to error to prevent charge for unused AWS instances...")
 		failedNodes := map[string]error{}
 		for region, regionInstanceID := range instanceIDs {
 			for _, instanceID := range regionInstanceID {
-				ux.Logger.PrintToUser(fmt.Sprintf("Stopping AWS cloud server %s...", instanceID))
-				if stopErr := ec2Svc[region].StopInstance(instanceID, "", true); stopErr != nil {
-					failedNodes[instanceID] = stopErr
+				ux.Logger.PrintToUser(fmt.Sprintf("Destroying AWS cloud server %s...", instanceID))
+				if destroyErr := ec2Svc[region].DestroyInstance(instanceID, "", true); destroyErr != nil {
+					failedNodes[instanceID] = destroyErr
 				}
-				ux.Logger.PrintToUser(fmt.Sprintf("AWS cloud server instance %s stopped", instanceID))
+				ux.Logger.PrintToUser(fmt.Sprintf("AWS cloud server instance %s destroyed", instanceID))
 			}
 		}
 		if len(failedNodes) > 0 {
 			ux.Logger.PrintToUser("Failed nodes: ")
 			for node, err := range failedNodes {
-				ux.Logger.PrintToUser(fmt.Sprintf("Failed to stop node %s due to %s", node, err))
+				ux.Logger.PrintToUser(fmt.Sprintf("Failed to destroy node %s due to %s", node, err))
 			}
-			ux.Logger.PrintToUser("Stop the above instance(s) on AWS console to prevent charges")
-			return models.CloudConfig{}, fmt.Errorf("failed to stop node(s) %s", failedNodes)
+			ux.Logger.PrintToUser("Destroy the above instance(s) on AWS console to prevent charges")
+			return models.CloudConfig{}, fmt.Errorf("failed to destroy node(s) %s", failedNodes)
 		}
 		return models.CloudConfig{}, err
 	}

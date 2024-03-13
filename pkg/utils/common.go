@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -287,4 +288,42 @@ func GetIndexInSlice[T comparable](list []T, element T) (int, error) {
 		}
 	}
 	return 0, fmt.Errorf("element not found")
+}
+
+// GetRepoFromCommitURL takes a Git repository URL that contains commit ID and returns the cloneable
+// Git Repo URL (ends in .git) and the repo directory name
+func GetRepoFromCommitURL(gitRepoURL string) (string, string) {
+	splitURL := strings.Split(gitRepoURL, "/")
+	if len(splitURL) > 2 {
+		splitURLWOCommit := splitURL[:len(splitURL)-2]
+		gitRepo := strings.Join(splitURLWOCommit, "/")
+		gitRepo += constants.GitExtension
+		return gitRepo, splitURLWOCommit[len(splitURLWOCommit)-1]
+	}
+	return "", ""
+}
+
+// GetGitCommit takes a Git repository URL that contains commit ID and returns the commit ID
+func GetGitCommit(gitRepoURL string) string {
+	if strings.Contains(gitRepoURL, "/commit/") {
+		splitURL := strings.Split(gitRepoURL, "/")
+		if len(splitURL) > 0 {
+			commitID := splitURL[len(splitURL)-1]
+			return commitID
+		}
+	}
+	return ""
+}
+
+// ReadLongString reads a long string from the user input.
+func ReadLongString(msg string, args ...interface{}) (string, error) {
+	fmt.Println(fmt.Sprintf(msg, args...))
+	reader := bufio.NewReader(os.Stdin)
+	longString, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	// Remove newline character at the end
+	longString = strings.TrimSuffix(longString, "\n")
+	return longString, nil
 }
