@@ -44,10 +44,6 @@ func newMsgCmd() *cobra.Command {
 }
 
 func msg(_ *cobra.Command, args []string) error {
-	return msgWithLocalFlags(nil, args, globalNetworkFlags)
-}
-
-func msgWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
 	sourceSubnetName := args[0]
 	destSubnetName := args[1]
 	message := args[2]
@@ -60,7 +56,7 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkF
 		subnetNameToGetNetworkFrom = destSubnetName
 	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags,
+		globalNetworkFlags,
 		true,
 		msgSupportedNetworkOptions,
 		subnetNameToGetNetworkFrom,

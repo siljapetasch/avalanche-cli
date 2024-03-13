@@ -29,12 +29,8 @@ func newAddSubnetToRelayerServiceCmd() *cobra.Command {
 }
 
 func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
-	return addSubnetToRelayerServiceWithLocalFlags(nil, args, globalNetworkFlags)
-}
-
-func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags,
+		globalNetworkFlags,
 		true,
 		addSubnetToRelayerServiceSupportedNetworkOptions,
 		"",

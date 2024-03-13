@@ -33,11 +33,10 @@ func newDeployCmd() *cobra.Command {
 }
 
 func deploy(_ *cobra.Command, args []string) error {
-	return DeployWithLocalFlags(nil, args, globalNetworkFlags)
+	return CallDeploy(args[0], globalNetworkFlags)
 }
 
-func DeployWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
-	subnetName := args[0]
+func CallDeploy(subnetName string, flags subnetcmd.NetworkFlags) error {
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
 		flags,
 		true,

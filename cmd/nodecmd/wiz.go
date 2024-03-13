@@ -258,7 +258,7 @@ func wiz(cmd *cobra.Command, args []string) error {
 		flags := subnetcmd.NetworkFlags{
 			ClusterName: clusterName,
 		}
-		if err := teleportercmd.DeployWithLocalFlags(nil, []string{subnetName}, flags); err != nil {
+		if err := teleportercmd.CallDeploy(subnetName, flags); err != nil {
 			return err
 		}
 	}
