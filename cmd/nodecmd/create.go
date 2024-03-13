@@ -41,7 +41,7 @@ import (
 
 var (
 	createSupportedNetworkOptions         = []subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Devnet}
-	globalNetworkFlags                 subnetcmd.NetworkFlags
+	globalNetworkFlags                    subnetcmd.NetworkFlags
 	useAWS                                bool
 	useGCP                                bool
 	cmdLineRegion                         []string

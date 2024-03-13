@@ -43,9 +43,7 @@ type Network struct {
 	ClusterName string
 }
 
-var (
-	UndefinedNetwork = Network{}
-)
+var UndefinedNetwork = Network{}
 
 func NewNetwork(kind NetworkKind, id uint32, endpoint string, clusterName string) Network {
 	return Network{

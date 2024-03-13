@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	globalNetworkFlags         subnetcmd.NetworkFlags
+	globalNetworkFlags                  subnetcmd.NetworkFlags
 	addValidatorSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Mainnet}
 	keyName                             string
 	useLedger                           bool

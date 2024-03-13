@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	globalNetworkFlags       subnetcmd.NetworkFlags
+	globalNetworkFlags          subnetcmd.NetworkFlags
 	listSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
 	all                         bool
 	pchain                      bool

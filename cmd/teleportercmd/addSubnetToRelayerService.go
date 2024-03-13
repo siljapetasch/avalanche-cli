@@ -10,9 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
-)
+var addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
 
 // avalanche teleporter relayer addSubnetToService
 func newAddSubnetToRelayerServiceCmd() *cobra.Command {

@@ -14,9 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-)
+var deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
 
 // avalanche teleporter deploy
 func newDeployCmd() *cobra.Command {
