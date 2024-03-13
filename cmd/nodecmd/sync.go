@@ -149,7 +149,6 @@ func trackSubnet(
 	}
 	wg.Wait()
 	if wgResults.HasErrors() {
-		fmt.Println(wgResults.GetErrorHostMap())
 		return nil, fmt.Errorf("failed to track subnet for node(s) %s", wgResults.GetErrorHostMap())
 	}
 	return wgResults.GetErrorHosts(), nil

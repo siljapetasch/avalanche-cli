@@ -75,6 +75,7 @@ you provide the --avalanchego-config flag, this command attempts to edit the con
 at that path.
 
 This command currently only supports Subnets deployed on the Fuji Testnet and Mainnet.`,
+		SilenceUsage:      true,
 		RunE: joinCmd,
 		Args: cobra.ExactArgs(1),
 	}
