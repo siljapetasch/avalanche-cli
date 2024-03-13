@@ -291,7 +291,7 @@ func deployClusterYAMLFile(clusterName, subnetName string) error {
 			return err
 		}
 	}
-	subnetID, chainID, err := getDeployedSubnetInfo(subnetName)
+	subnetID, chainID, err := getDeployedSubnetInfo(clusterName, subnetName)
 	if err != nil {
 		return err
 	}
