@@ -271,41 +271,40 @@ func wiz(cmd *cobra.Command, args []string) error {
 		ux.Logger.PrintToUser(logging.Green.Wrap("Devnet %s is successfully created and is now validating subnet %s!"), clusterName, subnetName)
 	}
 
-	if err = deployClusterYAMLFile(clusterName, subnetName); err != nil {
+	b, err := deployClusterYAMLFile(clusterName, subnetName)
+	if err != nil {
 		return err
 	}
-	ux.Logger.GreenCheckmarkToUser("Cluster information YAML file can be found at /home/ubuntu/clusterInfo.yaml at external host")
-
+	if b {
+		ux.Logger.GreenCheckmarkToUser("Cluster information YAML file can be found at /home/ubuntu/clusterInfo.yaml at external host")
+	}
 	return nil
 }
 
 // TODO: made this to work if there is no monitoring node
-func deployClusterYAMLFile(clusterName, subnetName string) error {
-	var (
-		err          error
-		separateHost *models.Host
-	)
+func deployClusterYAMLFile(clusterName, subnetName string) (bool, error) {
+	var separateHost *models.Host
 	monitoringInventoryFile := app.GetMonitoringInventoryDir(clusterName)
 	if utils.FileExists(monitoringInventoryFile) {
 		separateHosts, err := ansible.GetInventoryFromAnsibleInventoryFile(app.GetMonitoringInventoryDir(clusterName))
 		if err != nil {
-			return err
+			return false, err
 		}
 		if len(separateHosts) > 0 {
 			separateHost = separateHosts[0]
 		}
 	}
 	if separateHost == nil {
-		return nil
+		return false, nil
 	}
 	subnetID, chainID, err := getDeployedSubnetInfo(clusterName, subnetName)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if err := createClusterYAMLFile(clusterName, subnetID, chainID, separateHost); err != nil {
-		return err
+		return false, err
 	}
-	return ssh.RunSSHCopyYAMLFile(separateHost, app.GetClusterYAMLFilePath(clusterName))
+	return true, ssh.RunSSHCopyYAMLFile(separateHost, app.GetClusterYAMLFilePath(clusterName))
 }
 
 func waitForHealthyCluster(
