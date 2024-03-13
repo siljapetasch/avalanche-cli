@@ -24,13 +24,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type MsgCmdFlags struct {
-	Network subnetcmd.NetworkFlags
-}
-
 var (
 	msgSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-	msgCmdFlags                MsgCmdFlags
+	globalNetworkFlags         subnetcmd.NetworkFlags
 )
 
 // avalanche teleporter msg
@@ -43,15 +39,15 @@ func newMsgCmd() *cobra.Command {
 		RunE:         msg,
 		Args:         cobra.ExactArgs(3),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &msgCmdFlags.Network, true, msgSupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, msgSupportedNetworkOptions)
 	return cmd
 }
 
 func msg(_ *cobra.Command, args []string) error {
-	return msgWithLocalFlags(nil, args, msgCmdFlags)
+	return msgWithLocalFlags(nil, args, globalNetworkFlags)
 }
 
-func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error {
+func msgWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
 	sourceSubnetName := args[0]
 	destSubnetName := args[1]
 	message := args[2]
@@ -64,7 +60,7 @@ func msgWithLocalFlags(_ *cobra.Command, args []string, flags MsgCmdFlags) error
 		subnetNameToGetNetworkFrom = destSubnetName
 	}
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		msgCmdFlags.Network,
+		flags,
 		true,
 		msgSupportedNetworkOptions,
 		subnetNameToGetNetworkFrom,

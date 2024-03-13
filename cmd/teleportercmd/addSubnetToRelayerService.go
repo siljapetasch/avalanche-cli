@@ -10,13 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type AddSubnetToRelayerServiceCmdFlags struct {
-	Network subnetcmd.NetworkFlags
-}
-
 var (
 	addSubnetToRelayerServiceSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Devnet, subnetcmd.Fuji, subnetcmd.Mainnet}
-	addSubnetToRelayerServiceCmdFlags                AddSubnetToRelayerServiceCmdFlags
 )
 
 // avalanche teleporter relayer addSubnetToService
@@ -29,17 +24,17 @@ func newAddSubnetToRelayerServiceCmd() *cobra.Command {
 		RunE:         addSubnetToRelayerService,
 		Args:         cobra.ExactArgs(1),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &addSubnetToRelayerServiceCmdFlags.Network, true, addSubnetToRelayerServiceSupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, addSubnetToRelayerServiceSupportedNetworkOptions)
 	return cmd
 }
 
 func addSubnetToRelayerService(_ *cobra.Command, args []string) error {
-	return addSubnetToRelayerServiceWithLocalFlags(nil, args, addSubnetToRelayerServiceCmdFlags)
+	return addSubnetToRelayerServiceWithLocalFlags(nil, args, globalNetworkFlags)
 }
 
-func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, flags AddSubnetToRelayerServiceCmdFlags) error {
+func addSubnetToRelayerServiceWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		addSubnetToRelayerServiceCmdFlags.Network,
+		flags,
 		true,
 		addSubnetToRelayerServiceSupportedNetworkOptions,
 		"",

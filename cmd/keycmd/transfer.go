@@ -42,7 +42,6 @@ const (
 
 var (
 	transferSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
-	transferNetworkCmdFlags         subnetcmd.NetworkFlags
 	send                            bool
 	receive                         bool
 	keyName                         string
@@ -64,7 +63,7 @@ func newTransferCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(0),
 		SilenceUsage: true,
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &transferNetworkCmdFlags, false, transferSupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, transferSupportedNetworkOptions)
 	cmd.Flags().BoolVar(
 		&PToX,
 		"fund-x-chain",
@@ -145,7 +144,7 @@ func transferF(*cobra.Command, []string) error {
 	}
 
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		transferNetworkCmdFlags,
+		globalNetworkFlags,
 		false,
 		transferSupportedNetworkOptions,
 		"",

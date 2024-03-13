@@ -14,13 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type DeployCmdFlags struct {
-	Network subnetcmd.NetworkFlags
-}
-
 var (
 	deploySupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Local, subnetcmd.Cluster, subnetcmd.Fuji, subnetcmd.Mainnet, subnetcmd.Devnet}
-	deployCmdFlags                DeployCmdFlags
 )
 
 // avalanche teleporter deploy
@@ -33,18 +28,18 @@ func newDeployCmd() *cobra.Command {
 		RunE:         deploy,
 		Args:         cobra.ExactArgs(1),
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &deployCmdFlags.Network, true, deploySupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, true, deploySupportedNetworkOptions)
 	return cmd
 }
 
 func deploy(_ *cobra.Command, args []string) error {
-	return DeployWithLocalFlags(nil, args, deployCmdFlags)
+	return DeployWithLocalFlags(nil, args, globalNetworkFlags)
 }
 
-func DeployWithLocalFlags(_ *cobra.Command, args []string, flags DeployCmdFlags) error {
+func DeployWithLocalFlags(_ *cobra.Command, args []string, flags subnetcmd.NetworkFlags) error {
 	subnetName := args[0]
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		flags.Network,
+		flags,
 		true,
 		deploySupportedNetworkOptions,
 		subnetName,

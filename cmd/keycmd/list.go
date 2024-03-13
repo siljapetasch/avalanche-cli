@@ -36,8 +36,8 @@ const (
 )
 
 var (
+	globalNetworkFlags       subnetcmd.NetworkFlags
 	listSupportedNetworkOptions = []subnetcmd.NetworkOption{subnetcmd.Mainnet, subnetcmd.Fuji, subnetcmd.Local}
-	listNetworkCmdFlags         subnetcmd.NetworkFlags
 	all                         bool
 	pchain                      bool
 	cchain                      bool
@@ -57,7 +57,7 @@ keys or for the ledger addresses associated to certain indices.`,
 		RunE:         listKeys,
 		SilenceUsage: true,
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &listNetworkCmdFlags, false, listSupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, listSupportedNetworkOptions)
 	cmd.Flags().BoolVarP(
 		&all,
 		allFlag,
@@ -171,13 +171,13 @@ type addressInfo struct {
 func listKeys(*cobra.Command, []string) error {
 	var addrInfos []addressInfo
 	networks := []models.Network{}
-	if listNetworkCmdFlags.UseLocal || all {
+	if globalNetworkFlags.UseLocal || all {
 		networks = append(networks, models.NewLocalNetwork())
 	}
-	if listNetworkCmdFlags.UseFuji || all {
+	if globalNetworkFlags.UseFuji || all {
 		networks = append(networks, models.NewFujiNetwork())
 	}
-	if listNetworkCmdFlags.UseMainnet || all {
+	if globalNetworkFlags.UseMainnet || all {
 		networks = append(networks, models.NewMainnetNetwork())
 	}
 	if len(networks) == 0 {

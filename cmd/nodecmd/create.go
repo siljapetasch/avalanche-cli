@@ -41,7 +41,7 @@ import (
 
 var (
 	createSupportedNetworkOptions         = []subnetcmd.NetworkOption{subnetcmd.Fuji, subnetcmd.Devnet}
-	createNetworkCmdFlags                 subnetcmd.NetworkFlags
+	globalNetworkFlags                 subnetcmd.NetworkFlags
 	useAWS                                bool
 	useGCP                                bool
 	cmdLineRegion                         []string
@@ -88,7 +88,7 @@ will apply to all nodes in the cluster`,
 		Args:         cobra.ExactArgs(1),
 		RunE:         createNodes,
 	}
-	subnetcmd.AddNetworkFlagsToCmd(cmd, &createNetworkCmdFlags, false, createSupportedNetworkOptions)
+	subnetcmd.AddNetworkFlagsToCmd(cmd, &globalNetworkFlags, false, createSupportedNetworkOptions)
 	cmd.Flags().BoolVar(&useStaticIP, "use-static-ip", true, "attach static Public IP on cloud servers")
 	cmd.Flags().BoolVar(&useAWS, "aws", false, "create node/s in AWS cloud")
 	cmd.Flags().BoolVar(&useGCP, "gcp", false, "create node/s in GCP cloud")
@@ -139,7 +139,7 @@ func preCreateChecks() error {
 	if useSSHAgent && !utils.IsSSHAgentAvailable() {
 		return fmt.Errorf("ssh agent is not available")
 	}
-	if devnetNumAPINodes > 0 && !createNetworkCmdFlags.UseDevnet {
+	if devnetNumAPINodes > 0 && !globalNetworkFlags.UseDevnet {
 		return fmt.Errorf("api nodes can only be created in devnet")
 	}
 	return nil
@@ -151,7 +151,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 	}
 	clusterName := args[0]
 	network, err := subnetcmd.GetNetworkFromCmdLineFlags(
-		createNetworkCmdFlags,
+		globalNetworkFlags,
 		false,
 		createSupportedNetworkOptions,
 		"",
@@ -181,7 +181,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("set to use GCP project but cloud option is not GCP")
 	}
 	// for devnet add nonstake api nodes for each region with stake
-	if createNetworkCmdFlags.UseDevnet {
+	if globalNetworkFlags.UseDevnet {
 		numNodes = utils.Map(numNodes, func(n int) int {
 			return n + devnetNumAPINodes
 		})
@@ -1251,7 +1251,7 @@ func getRegionsNodeNum(cloudName string) (
 		if err != nil {
 			return nil, err
 		}
-		if createNetworkCmdFlags.UseDevnet {
+		if globalNetworkFlags.UseDevnet {
 			numNodes += uint32(devnetNumAPINodes)
 		}
 		if numNodes > uint32(math.MaxInt32) {
