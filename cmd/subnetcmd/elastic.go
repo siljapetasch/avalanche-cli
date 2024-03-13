@@ -143,7 +143,7 @@ func importFromXChain(deployer *subnet.PublicDeployer,
 func transformElasticSubnet(cmd *cobra.Command, args []string) error {
 	subnetName := args[0]
 
-	if err := DeploySubnetFirst(cmd, subnetName, false); err != nil {
+	if err := DeploySubnetFirst(cmd, subnetName, false, elasticSupportedNetworkOptions); err != nil {
 		return err
 	}
 

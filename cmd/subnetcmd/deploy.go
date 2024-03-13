@@ -161,8 +161,9 @@ func checkSubnetEVMDefaultAddressNotInAlloc(network models.Network, chain string
 	return nil
 }
 
-func runDeploy(cmd *cobra.Command, args []string) error {
+func runDeploy(cmd *cobra.Command, args []string, supportedNetworkOptions []NetworkOption) error {
 	skipCreatePrompt = true
+	deploySupportedNetworkOptions = supportedNetworkOptions
 	return deploySubnet(cmd, args)
 }
 

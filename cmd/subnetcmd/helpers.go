@@ -315,7 +315,7 @@ func CreateSubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) e
 	return nil
 }
 
-func DeploySubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) error {
+func DeploySubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool, supportedNetworkOptions []NetworkOption) error {
 	var (
 		doDeploy       bool
 		msg            string
@@ -326,13 +326,13 @@ func DeploySubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) e
 		msg = fmt.Sprintf("Subnet %s is not created yet. Do you want to create it first?", subnetName)
 		errIfNoChoosen = fmt.Errorf("subnet not available and not being created first")
 	} else {
-		sc, err := app.LoadSidecar(subnetName)
+		filteredSupportedNetworkOptions, _, _, err := GetSupportedNetworkOptionsForSubnet(subnetName, supportedNetworkOptions)
 		if err != nil {
 			return err
 		}
-		if len(sc.Networks) == 0 {
+		if len(filteredSupportedNetworkOptions) == 0 {
 			doDeploy = true
-			msg = fmt.Sprintf("Subnet %s is not deployed yet. Do you want to deploy it first?", subnetName)
+			msg = fmt.Sprintf("Subnet %s is not deployed yet to a supported network. Do you want to deploy it first?", subnetName)
 			errIfNoChoosen = fmt.Errorf("subnet not deployed and not being deployed first")
 		}
 	}
@@ -346,7 +346,7 @@ func DeploySubnetFirst(cmd *cobra.Command, subnetName string, skipPrompt bool) e
 				return errIfNoChoosen
 			}
 		}
-		return runDeploy(cmd, []string{subnetName})
+		return runDeploy(cmd, []string{subnetName}, supportedNetworkOptions)
 	}
 	return nil
 }
