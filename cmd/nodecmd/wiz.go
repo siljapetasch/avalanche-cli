@@ -15,6 +15,7 @@ import (
 	"github.com/ava-labs/avalanche-cli/pkg/models"
 	"github.com/ava-labs/avalanche-cli/pkg/networkoptions"
 	"github.com/ava-labs/avalanche-cli/pkg/ssh"
+	"github.com/ava-labs/avalanche-cli/pkg/utils"
 	"github.com/ava-labs/avalanche-cli/pkg/ux"
 	"github.com/ava-labs/avalanchego/utils/logging"
 
@@ -174,7 +175,6 @@ func wiz(cmd *cobra.Command, args []string) error {
 	} else {
 		ux.Logger.PrintToUser("")
 		ux.Logger.PrintToUser(logging.Green.Wrap("Adding subnet into existing devnet %s..."), clusterName)
-		ux.Logger.PrintToUser("")
 	}
 
 	// check all validators are found
@@ -280,9 +280,16 @@ func wiz(cmd *cobra.Command, args []string) error {
 }
 
 func deployClusterYAMLFile(clusterName, subnetName string) error {
-	separateHosts, err := ansible.GetInventoryFromAnsibleInventoryFile(app.GetMonitoringInventoryDir(clusterName))
-	if err != nil {
-		return err
+	var (
+		err           error
+		separateHosts []*models.Host
+	)
+	monitoringInventoryFile := app.GetMonitoringInventoryDir(clusterName)
+	if utils.FileExists(monitoringInventoryFile) {
+		separateHosts, err = ansible.GetInventoryFromAnsibleInventoryFile(app.GetMonitoringInventoryDir(clusterName))
+		if err != nil {
+			return err
+		}
 	}
 	subnetID, chainID, err := getDeployedSubnetInfo(subnetName)
 	if err != nil {
