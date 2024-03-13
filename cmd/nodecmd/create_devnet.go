@@ -174,6 +174,7 @@ func setupDevnet(clusterName string, hosts []*models.Host, apiNodeIPMap map[stri
 	}
 	endpoint := fmt.Sprintf("http://%s:%d", endpointIP, constants.AvalanchegoAPIPort)
 	network := models.NewDevnetNetwork(endpoint, 0)
+	network = models.NewNetworkFromCluster(network, clusterName)
 
 	// get random staking key for devnet genesis
 	k, err := key.NewSoft(network.ID)

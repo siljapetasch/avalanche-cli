@@ -159,6 +159,7 @@ func createNodes(_ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	network = models.NewNetworkFromCluster(network, clusterName)
 
 	avalancheGoVersion, err := getAvalancheGoVersion()
 	if err != nil {
