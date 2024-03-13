@@ -155,10 +155,10 @@ const (
 	CloudServerStorageSize                       = 1000
 	MonitoringCloudServerStorageSize             = 50
 	OutboundPort                                 = 0
-	SetupCLIFromSourceBranch                     = "main"
 	// Set this one to true while testing changes that alter CLI execution on cloud nodes
 	// Disable it for releases to save cluster creation time
-	EnableSetupCLIFromSource           = false
+	EnableSetupCLIFromSource           = true
+	SetupCLIFromSourceBranch           = "relayer-install"
 	BuildEnvGolangVersion              = "1.21.1"
 	IsHealthyJSONFile                  = "isHealthy.json"
 	IsBootstrappedJSONFile             = "isBootstrapped.json"
