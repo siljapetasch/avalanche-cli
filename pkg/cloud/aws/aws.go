@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strings"
@@ -487,13 +488,29 @@ func (c *AwsCloud) SetupSecurityGroup(ipAddress, securityGroupName string) (stri
 }
 
 // CheckIPInSg checks if the IP is present in the SecurityGroup.
-func CheckIPInSg(sg *types.SecurityGroup, currentIP string, port int32) bool {
+func CheckIPInSg(sg *types.SecurityGroup, ip string, port int32) bool {
+	if !strings.Contains(ip, "/") {
+		ip = fmt.Sprintf("%s/32", ip) // add netmask /32 if missing
+	}
+	_, currentIP, err := net.ParseCIDR(ip)
+	if err != nil {
+		return false
+	}
 	for _, ipPermission := range sg.IpPermissions {
-		for _, ip := range ipPermission.IpRanges {
-			if strings.Contains(*ip.CidrIp, currentIP) {
-				if *ipPermission.FromPort == port {
-					return true
-				}
+		for _, ipRange := range ipPermission.IpRanges {
+			if ipRange.CidrIp == nil {
+				continue
+			}
+			_, cidrIPNet, err := net.ParseCIDR(*ipRange.CidrIp)
+			fmt.Println(cidrIPNet)
+			fmt.Println("=========")
+			fmt.Println(currentIP)
+			if err != nil {
+				return false
+			}
+
+			if string(currentIP.IP) == string(cidrIPNet.IP) && string(currentIP.Mask) == string(cidrIPNet.Mask) && *ipPermission.ToPort == port && *ipPermission.FromPort == port {
+				return true
 			}
 		}
 	}
