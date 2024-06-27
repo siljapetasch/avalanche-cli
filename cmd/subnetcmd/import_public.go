@@ -24,6 +24,8 @@ var (
 	importPublicSupportedNetworkOptions = []networkoptions.NetworkOption{networkoptions.Fuji, networkoptions.Mainnet}
 	blockchainIDstr                     string
 	nodeURL                             string
+	useSubnetEvm                        bool
+	useCustom                           bool
 )
 
 // avalanche subnet import public
@@ -133,7 +135,7 @@ func importPublic(*cobra.Command, []string) error {
 	// TODO: it's probably possible to deploy VMs with the same name on a public network
 	// In this case, an import could clash because the tool supports unique names only
 
-	vmType := getVMFromFlag()
+	vmType := getVMFromFlag(useSubnetEvm, useCustom)
 	if vmType == "" {
 		subnetTypeStr, err := app.Prompt.CaptureList(
 			"What's this VM's type?",
