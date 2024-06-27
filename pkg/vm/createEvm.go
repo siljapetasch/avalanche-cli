@@ -250,7 +250,6 @@ func ensureAdminsHaveBalance(admins []common.Address, alloc core.GenesisAlloc) e
 
 func GetVMVersion(
 	app *application.Avalanche,
-	vmName string,
 	repoName string,
 	vmVersion string,
 ) (string, error) {
@@ -273,7 +272,7 @@ func GetVMVersion(
 			return "", err
 		}
 	case "":
-		vmVersion, err = askForVMVersion(app, vmName, repoName)
+		vmVersion, err = askForVMVersion(app, repoName)
 		if err != nil {
 			return "", err
 		}
@@ -283,7 +282,6 @@ func GetVMVersion(
 
 func askForVMVersion(
 	app *application.Avalanche,
-	vmName string,
 	repoName string,
 ) (string, error) {
 	latestReleaseVersion, err := app.Downloader.GetLatestReleaseVersion(
@@ -307,7 +305,7 @@ func askForVMVersion(
 	useLatestRelease := "Use latest release version" + versionComments[latestReleaseVersion]
 	useLatestPreRelease := "Use latest pre-release version" + versionComments[latestPreReleaseVersion]
 
-	defaultPrompt := fmt.Sprintf("What version of %s would you like?", vmName)
+	defaultPrompt := "Version"
 
 	versionOptions := []string{useLatestRelease, useCustom}
 	if latestPreReleaseVersion != latestReleaseVersion {

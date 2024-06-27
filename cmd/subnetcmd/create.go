@@ -202,7 +202,7 @@ func CallCreate(
 	}
 
 	if subnetType == models.SubnetEvm {
-		flags.EvmVersion, err = vm.GetVMVersion(app, "Subnet-EVM", constants.SubnetEVMRepoName, flags.EvmVersion)
+		flags.EvmVersion, err = vm.GetVMVersion(app, constants.SubnetEVMRepoName, flags.EvmVersion)
 		if err != nil {
 			return err
 		}
