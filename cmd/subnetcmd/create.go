@@ -60,6 +60,8 @@ var (
 	errMutuallyVMConfigOptions        = errors.New("specifying --genesis flag disables SubnetEVM config flags --evm-chain-id,--evm-token,--evm-defaults")
 )
 
+const explainOption = "Explain the difference"
+
 // avalanche subnet create
 func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -144,7 +146,6 @@ func CallCreate(
 	if subnetType == "" {
 		subnetEvmOption := "Subnet-EVM"
 		customVMOption := "Custom VM"
-		explainOption := "Explain the difference"
 		options := []string{subnetEvmOption, customVMOption, explainOption}
 		var subnetTypeStr string
 		for {
@@ -163,7 +164,7 @@ func CallCreate(
 			case explainOption:
 				ux.Logger.PrintToUser("Virtual machines are the blueprint the defines the application-level logic of a blockchain. It determines the language and rules for writing and executing smart contracts, as well as other blockchain logic.")
 				ux.Logger.PrintToUser("Subnet-EVM is a EVM-compatible virtual machine that supports smart contract development in Solidity. This VM is an out-of-box solution for Subnet deployers who want a dApp development experience that is nearly identical to Ethereum, without having to manage or create a custom virtual machine. For more information, please visit: https://github.com/ava-labs/subnet-evm")
-				ux.Logger.PrintToUser("Custom VMs created with the HyperSDK or writen from scratch in golang or rust can be deployed on Avalanche using the second option. More information can be found in the docs at https://docs.avax.network/learn/avalanche/virtual-machines.")
+				ux.Logger.PrintToUser("Custom VMs created with the HyperSDK or written from scratch in golang or rust can be deployed on Avalanche using the second option. More information can be found in the docs at https://docs.avax.network/learn/avalanche/virtual-machines.")
 				continue
 			}
 			break
@@ -222,7 +223,6 @@ func CallCreate(
 	if subnetType == models.SubnetEvm && flags.GenesisFile == "" {
 		nativeTokenOption := "It's own Native Token"
 		externalTokenOption := "A token from another blockchain"
-		explainOption := "Explain the difference"
 		options := []string{nativeTokenOption, externalTokenOption, explainOption}
 		for {
 			option, err := app.Prompt.CaptureList(
@@ -289,7 +289,6 @@ func CallCreate(
 	// Transaction / Gas Fees
 	if subnetType == models.SubnetEvm && flags.GenesisFile == "" {
 		customizeOption := "Customize fee config"
-		explainOption := "Explain the difference"
 		lowOption := "Low disk use    / Low Throughput    1.5 mil gas/s (C-Chain's setting)"
 		mediumOption := "Medium disk use / Medium Throughput 2 mil   gas/s"
 		highOption := "High disk use   / High Throughput   5 mil   gas/s"
@@ -334,13 +333,15 @@ func CallCreate(
 				if err != nil {
 					return err
 				}
-				//missing case for dontChangeFeeSettingsOption
+			case dontChangeFeeSettingsOption:
+			case explainOption:
+				ux.Logger.PrintToUser("To be provided by devrel")
+				continue
 			}
 			break
 		}
 		burnFees := "I am fine with gas fees being burned (Reward Manager Precompile OFF)"
 		distributeFees := "I want to customize accumulated gas fees distribution (Reward Manager Precompile ON)"
-		explainOption = "Explain the difference"
 		options = []string{burnFees, distributeFees, explainOption}
 		for {
 			option, err := app.Prompt.CaptureList(
@@ -379,7 +380,6 @@ func CallCreate(
 		} else if !flag.Changed && !externalGasToken {
 			interoperatingBlockchainOption := "Yes, I want my blockchain to be able to interoperate with other blockchains and the C-Chain"
 			isolatedBlockchainOption := "No, I want to run my blockchain isolated"
-			explainOption := "Explain the difference"
 			options := []string{interoperatingBlockchainOption, isolatedBlockchainOption, explainOption}
 			for {
 				option, err := app.Prompt.CaptureList(
@@ -416,7 +416,6 @@ func CallCreate(
 	if subnetType == models.SubnetEvm && flags.GenesisFile == "" {
 		noOption := "No"
 		yesOption := "Yes"
-		explainOption := "Explain the difference"
 		options := []string{noOption, yesOption, explainOption}
 		for {
 			option, err := app.Prompt.CaptureList(
